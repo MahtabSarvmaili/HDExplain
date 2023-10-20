@@ -1,11 +1,10 @@
 import numpy as np
 import argparse
-import time
 
 from torch.utils.data import DataLoader
 from models import ClassifierTrainer, CustomDataset
 
-from utils import networks, synthetic_data, WorkSplitter, inhour
+from utils import networks, synthetic_data
 
 def main(args):
     if args.synthetic:

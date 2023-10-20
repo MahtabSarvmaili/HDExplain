@@ -1,13 +1,15 @@
 from explainers import *
-from models.classifiers import SimpleNet
+from models.classifiers import SimpleNet, resnet18
 from dataloaders import rectangular, moon
+
 
 explainers = {
     "YADEA": KSDExplainer
 }
 
 networks = {
-    "SimpleNet": SimpleNet
+    "SimpleNet": SimpleNet,
+    "ResNet": resnet18
 }
 
 synthetic_data = {

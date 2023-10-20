@@ -7,12 +7,12 @@ from explainers import BaseExplainer
 
 
 class KSDExplainer(BaseExplainer):
-    def __init__(self, classifer):
-        super(KSDExplainer,self).__init__(classifer)
+    def __init__(self, classifier, n_classes):
+        super(KSDExplainer,self).__init__(classifier, n_classes)
 
     def data_influence(self, X, y, cache=True):
         yonehot = F.one_hot(torch.tensor(y), num_classes=self.n_classes)
-        print(yonehot)
+        # print(yonehot)
         xbackpropable = torch.from_numpy(np.array(X, dtype=np.float32))
         xbackpropable.requires_grad = True
         pred = self.classifier.predict(xbackpropable)
@@ -44,7 +44,7 @@ class KSDExplainer(BaseExplainer):
         k = np.exp(-dists / sigma / 2)
         scalars = np.matmul(scores_x, scores_y.T)
         scores_diffs = scores_x[:, None, :] - scores_y[None, :, :]
-        print(f'score diffs: {scores_diffs.shape}')
+        # print(f'score diffs: {scores_diffs.shape}')
         diffs = (d * scores_diffs).sum(axis=-1)
         der2 = p - dists / sigma
         stein_kernel = k * (scalars + diffs / sigma + der2 / sigma)
@@ -68,12 +68,12 @@ class KSDExplainer(BaseExplainer):
 
     def inference_transfer(self, X):
         Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
-        y_hat = torch.argmax(self.classifer.predict(Xtensor), dim=1).detach()
+        y_hat = torch.argmax(self.classifier.predict(Xtensor), dim=1).detach()
         return self.data_influence(X, y_hat, cache=False)
     
-    def pred_explanation(self, X, topK=5):
-        DXY_test, yonehot_test = self.inference_transfer(X)
-        D_test = np.hstack([X,yonehot_test])
+    def pred_explanation(self, X, X_test, topK=5):
+        DXY_test, yonehot_test = self.inference_transfer(X_test)
+        D_test = np.hstack([X_test,yonehot_test])
         D = np.hstack([X,self.influence[1]])
         DXY = self.influence[0]
         ksd = self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 1, 1, 1)
