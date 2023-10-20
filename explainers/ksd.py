@@ -1,13 +1,7 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 
 import numpy as np
-import pandas as pd
-
-import torch.optim as optim
-
-from torch.utils.data import DataLoader, Dataset
 
 from explainers import BaseExplainer
 
