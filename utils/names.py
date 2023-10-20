@@ -2,15 +2,15 @@ from explainers import *
 from models.classifiers import SimpleNet
 from dataloaders import rectangular, moon
 
-explainer_names = {
+explainers = {
     "YADEA": KSDExplainer
 }
 
-classifier_names = {
+networks = {
     "SimpleNet": SimpleNet
 }
 
-synthetic_data_names = {
+synthetic_data = {
     "Moon": moon,
     "Rectangular": rectangular
 }

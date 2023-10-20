@@ -1,1 +1,1 @@
-from synthetic import rectangular, moon
+from .synthetic import rectangular, moon
