@@ -28,7 +28,7 @@ def main(args):
         X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
         y_hat = torch.argmax(model.predict(X_test_tensor), dim=1).detach().numpy()
         
-        top_influencers, influence_scores = explainer.pred_explanation(X, X_test, topK=3)
+        _, influence_scores = explainer.pred_explanation(X, X_test, topK=3)
 
         if args.visualize:
             for index, test_point in enumerate(X_test):
