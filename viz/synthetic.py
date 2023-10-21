@@ -41,12 +41,12 @@ def ksd_distribution(ksd_scores, name="ksd_dist.pdf"):
   plt.savefig("plots/{0}".format(name), format='pdf')
 
 
-def ksd_influence(X, y, x_test, y_test, score, name="ksd_influence.pdf"):
+def ksd_influence(X, y, x_test, y_test, score, name="ksd_influence.pdf", clip=(-10, 10)):
 
   fig, ax = plt.subplots(figsize=(4,4))
   # When the label y is 0, the class is represented with a blue square.
   # When the label y is 1, the class is represented with a green triangle.
-  norm = plt.Normalize(-10, 10, clip=True)
+  norm = plt.Normalize(clip[0], clip[1], clip=True)
   ax.scatter(X[:, 0][y==2], X[:, 1][y==2], c=score[y==2], norm=norm, marker="*", cmap='RdYlGn')
   ax.scatter(X[:, 0][y==1], X[:, 1][y==1], c=score[y==1], norm=norm, marker="+", cmap='RdYlGn')
   im=ax.scatter(X[:, 0][y==0], X[:, 1][y==0], c=score[y==0], norm=norm, marker="x", cmap='RdYlGn')

@@ -25,9 +25,7 @@ class KSDExplainer(BaseExplainer):
                         pred.detach().numpy()])
 
         if cache == True:
-            self.influence = (DXY, 
-                            yonehot.detach().numpy()
-                            )
+            self.influence = DXY
         else:
             return (DXY, 
                     yonehot.detach().numpy()
@@ -55,9 +53,10 @@ class KSDExplainer(BaseExplainer):
         return weighted_stein_kernel
 
 
-    def data_model_discrepancy(self, X):
-        D = np.hstack([X,self.influence[1]])
-        DXY = self.influence[0]
+    def data_model_discrepancy(self, X, y):
+        yonehot = F.one_hot(torch.tensor(y), num_classes=self.n_classes).detach().numpy()
+        D = np.hstack([X,yonehot])
+        DXY = self.influence
         pyx = np.ones(X.shape[0])
         unnormalized = np.sum(self.gaussian_stein_kernel(D, D, 
                                                          DXY, DXY, 
@@ -71,10 +70,11 @@ class KSDExplainer(BaseExplainer):
         y_hat = torch.argmax(self.classifier.predict(Xtensor), dim=1).detach()
         return self.data_influence(X, y_hat, cache=False)
     
-    def pred_explanation(self, X, X_test, topK=5):
+    def pred_explanation(self, X, y, X_test, topK=5):
         DXY_test, yonehot_test = self.inference_transfer(X_test)
+        yonehot = F.one_hot(torch.tensor(y), num_classes=self.n_classes).detach().numpy()
         D_test = np.hstack([X_test,yonehot_test])
-        D = np.hstack([X,self.influence[1]])
-        DXY = self.influence[0]
+        D = np.hstack([X,yonehot])
+        DXY = self.influence
         ksd = self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 1, 1, 1)
         return np.argpartition(ksd, -topK, axis=1)[:, -topK:], ksd
