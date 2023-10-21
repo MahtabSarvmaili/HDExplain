@@ -7,8 +7,8 @@ from explainers import BaseExplainer
 
 
 class KSDExplainer(BaseExplainer):
-    def __init__(self, classifier, n_classes):
-        super(KSDExplainer,self).__init__(classifier, n_classes)
+    def __init__(self, classifier, n_classes, gpu=False):
+        super(KSDExplainer,self).__init__(classifier, n_classes, gpu)
 
     def data_influence(self, X, y, cache=True):
         yonehot = F.one_hot(torch.tensor(y), num_classes=self.n_classes)

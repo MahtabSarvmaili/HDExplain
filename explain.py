@@ -21,6 +21,8 @@ def main(args):
 
         explainer.data_influence(X, y, cache=True)
 
+        import ipdb; ipdb.set_trace()
+
         X_test,_ = synthetic_data[args.data](n_samples=5, 
                                              n_classes = args.n_classes, 
                                              random_state=0)

@@ -4,7 +4,8 @@ from dataloaders import rectangular, moon
 
 
 explainers = {
-    "YADEA": KSDExplainer
+    "YADEA": KSDExplainer,
+    "IF": InfluenceFunction
 }
 
 networks = {
