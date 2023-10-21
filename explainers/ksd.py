@@ -77,4 +77,4 @@ class KSDExplainer(BaseExplainer):
         D = np.hstack([X,self.influence[1]])
         DXY = self.influence[0]
         ksd = self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 1, 1, 1)
-        return np.argpartition(ksd, -topK, axis=1)[:, -topK:]
+        return np.argpartition(ksd, -topK, axis=1)[:, -topK:], ksd

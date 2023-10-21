@@ -1,1 +1,1 @@
-from synthetic import data_viz_2d, ksd_distribution, ksd_influence
+from .synthetic import data_viz_2d, ksd_distribution, ksd_influence

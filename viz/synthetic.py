@@ -26,7 +26,6 @@ def data_viz_2d(X, y, name="synthetic_data"):
 
   # Displaying the plot.
   plt.savefig('plots/{0}'.format(name), format="pdf")
-  plt.show()
 
 
 def ksd_distribution(ksd_scores, name="ksd_dist.pdf"):
@@ -40,7 +39,6 @@ def ksd_distribution(ksd_scores, name="ksd_dist.pdf"):
   plt.ylabel(r"Histogram", fontsize=16)
   plt.tight_layout()
   plt.savefig("plots/{0}".format(name), format='pdf')
-  plt.show()
 
 
 def ksd_influence(X, y, x_test, y_test, score, name="ksd_influence.pdf"):
@@ -84,6 +82,3 @@ def ksd_influence(X, y, x_test, y_test, score, name="ksd_influence.pdf"):
   plt.tight_layout()
 
   plt.savefig("plots/{0}".format(name), format='pdf')
-
-  # Displaying the plot.
-  plt.show()

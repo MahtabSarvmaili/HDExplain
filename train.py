@@ -4,7 +4,7 @@ import argparse
 from torch.utils.data import DataLoader
 from models import ClassifierTrainer, CustomDataset
 
-from utils import networks, synthetic_data
+from utils import networks, synthetic_data, check_int_positive
 
 def main(args):
     if args.synthetic:
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="LRec")
     parser.add_argument('-network', dest='network', default="SimpleNet")
     parser.add_argument('-data', dest='data', default="Moon")
-    parser.add_argument('-n_classes', dest='n_classes', default=2)
+    parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=2)
     parser.add_argument('--synthetic', dest='synthetic', action='store_true')
     args = parser.parse_args()
     main(args)

@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.datasets import make_moons
 
 
-def rectangular(n_samples, grid, n_classes, random_state=42):
+def rectangular(n_samples, n_classes, grid=(4, 4), random_state=42):
     np.random.seed(random_state)
     x_split = np.linspace(-2, 2, num=grid[0]+1)
     y_split = np.linspace(-2,2, num=grid[1]+1)
