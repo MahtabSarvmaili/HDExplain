@@ -30,12 +30,14 @@ def main(args):
         
         _, influence_scores = explainer.pred_explanation(X, y, X_test, topK=3)
 
+        bound = np.max([np.abs(np.min(influence_scores)), np.abs(np.max(influence_scores))])
+
         if args.visualize:
             for index, test_point in enumerate(X_test):
                 ksd_influence(X, y, test_point, y_hat[index], 
                               influence_scores[index], 
                               name="{0}-{1}-{2}.pdf".format(args.explainer, args.data, index),
-                              clip=(-0.2, 0.2)
+                              clip=(-bound, bound)
                               )
         
 

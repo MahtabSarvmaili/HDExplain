@@ -86,20 +86,6 @@ class InfluenceFunction(BaseExplainer):
 
         s_test_vec = [a / r for a in all]
 
-
-        # s_test_vec_list = []
-        # for i in range(r):
-        #     s_test_vec_list.append(self.s_test(z_test, t_test, X, y,
-        #                                        damp=damp, scale=scale,
-        #                                 recursion_depth=recursion_depth))
-        #     display_progress("Averaging r-times: ", i, r)
-
-        # s_test_vec = s_test_vec_list[0]
-        # for i in range(1, r):
-        #     s_test_vec += s_test_vec_list[i]
-
-        # s_test_vec = [i / r for i in s_test_vec]
-
         return s_test_vec
 
     
