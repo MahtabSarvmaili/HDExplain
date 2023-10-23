@@ -13,9 +13,13 @@ class SimpleNet(nn.Module):
         self.fc3 = nn.Linear(latent_dim, n_classes)
 
     def forward(self, x):
+        x = self.representation(x)
+        x = self.fc3(x)
+        return x
+    
+    def representation(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
         return x
 
     def predict(self, x):
@@ -135,6 +139,16 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        x = self.representation(x)
+        x = self.fc(x)
+
+        return x
+    
+    def predict(self, x):
+      logit = self.forward(x)
+      return F.softmax(logit, dim=1)
+    
+    def representation(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -147,9 +161,8 @@ class ResNet(nn.Module):
 
         x = self.avgpool(x)
         x = x.reshape(x.size(0), -1)
-        x = self.fc(x)
 
-        return x
+        return x       
 
 
 def _resnet(arch, block, layers, pretrained, progress, device, **kwargs):
@@ -281,7 +294,7 @@ class BasicBlock(nn.Module):
 
         return out
     
-    
+
 def resnet18(pretrained=False, progress=True, device="cpu", **kwargs):
     """Constructs a ResNet-18 model.
     Args:
