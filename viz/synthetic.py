@@ -41,7 +41,7 @@ def ksd_distribution(ksd_scores, name="ksd_dist.pdf"):
   plt.savefig("plots/{0}".format(name), format='pdf')
 
 
-def ksd_influence(X, y, x_test, y_test, score, name="ksd_influence.pdf", clip=(-10, 10)):
+def ksd_influence(X, y, x_test, y_test, score, name="ksd_influence.pdf", clip=(-3, 3)):
 
   fig, ax = plt.subplots(figsize=(4,4))
   # When the label y is 0, the class is represented with a blue square.
