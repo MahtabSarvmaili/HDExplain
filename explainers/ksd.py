@@ -10,10 +10,31 @@ class KSDExplainer(BaseExplainer):
     def __init__(self, classifier, n_classes, gpu=False):
         super(KSDExplainer,self).__init__(classifier, n_classes, gpu)
 
-    def data_influence(self, X, y, cache=True, **kwargs):
-        yonehot = F.one_hot(torch.tensor(y), num_classes=self.n_classes)
+    def data_influence(self, train_loader, cache=True, **kwargs):
+
+        DXY = []
+        for i, data in enumerate(train_loader):
+            Xtensor, ytensor = data
+            yonehot = F.one_hot(ytensor, num_classes=self.n_classes)
+            # print(yonehot)
+            xbackpropable = Xtensor.clone().detach()
+            xbackpropable.requires_grad = True
+            pred = self.classifier.predict(xbackpropable)
+            pred_prob = torch.sum(pred * yonehot, dim=1)
+            log_pred_prob = torch.log(pred_prob)
+            output = torch.sum(log_pred_prob)
+            gradients = torch.autograd.grad(output, xbackpropable)[0]
+
+            DXY.append(np.hstack([self.to_np(gradients),
+                            self.to_np(pred)]))
+
+        self.influence = np.vstack(DXY)
+        
+    def _data_influence(self, X, y):
+
+        yonehot = F.one_hot(y.clone().detach(), num_classes=self.n_classes)
         # print(yonehot)
-        xbackpropable = torch.from_numpy(np.array(X, dtype=np.float32))
+        xbackpropable = X.clone().detach()
         xbackpropable.requires_grad = True
         pred = self.classifier.predict(xbackpropable)
         pred_prob = torch.sum(pred * yonehot, dim=1)
@@ -23,13 +44,8 @@ class KSDExplainer(BaseExplainer):
 
         DXY = np.hstack([self.to_np(gradients),
                         self.to_np(pred)])
-
-        if cache == True:
-            self.influence = DXY
-        else:
-            return (DXY, 
-                    self.to_np(yonehot)
-                    )
+        
+        return DXY, self.to_np(yonehot)
 
     @staticmethod
     def gaussian_stein_kernel(
@@ -67,8 +83,8 @@ class KSDExplainer(BaseExplainer):
 
     def inference_transfer(self, X):
         Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
-        y_hat = self.to_np(torch.argmax(self.classifier.predict(Xtensor), dim=1))
-        return self.data_influence(X, y_hat, cache=False)
+        y_hat = torch.argmax(self.classifier.predict(Xtensor), dim=1)
+        return self._data_influence(Xtensor, y_hat)
     
     def pred_explanation(self, X, y, X_test, topK=5):
         DXY_test, yonehot_test = self.inference_transfer(X_test)

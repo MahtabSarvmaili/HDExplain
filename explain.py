@@ -4,6 +4,9 @@ from utils import explainers, networks, synthetic_data, check_int_positive
 from viz import ksd_influence
 import argparse
 
+from torch.utils.data import DataLoader
+from models import ClassifierTrainer, CustomDataset
+
 
 def main(args):
     if args.synthetic:
@@ -19,7 +22,10 @@ def main(args):
 
         X,y = synthetic_data[args.data](n_samples=500, n_classes = args.n_classes)
 
-        explainer.data_influence(X, y, cache=True)
+        dataset = CustomDataset(np.array(X, dtype=np.float32), np.array(y, dtype=np.int_))
+        dataloader = DataLoader(dataset, batch_size=100, shuffle=False)
+
+        explainer.data_influence(dataloader, cache=True)
 
         X_test,_ = synthetic_data[args.data](n_samples=5, 
                                              n_classes = args.n_classes, 

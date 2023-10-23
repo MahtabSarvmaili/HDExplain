@@ -9,7 +9,7 @@ from utils import networks, synthetic_data, check_int_positive
 def main(args):
     if args.synthetic:
         X,y = synthetic_data[args.data](n_samples=500, n_classes = args.n_classes)
-        dataset = CustomDataset(np.array(X, dtype=np.float32), y)
+        dataset = CustomDataset(np.array(X, dtype=np.float32), np.array(y, dtype=np.int_))
         dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
     
         model = networks[args.network](feature_dim=2, latent_dim=10, 

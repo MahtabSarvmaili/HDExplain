@@ -13,20 +13,25 @@ class TracIn(BaseExplainer):
     def __init__(self, classifier, n_classes, gpu=False):
         super(TracIn,self).__init__(classifier, n_classes, gpu)
 
-    def data_influence(self, X, y, cache=True, **kwargs):
-        Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
-        ytensor = torch.from_numpy(np.array(y, dtype=np.int_))
+    def data_influence(self, train_loader, cache=True, **kwargs):
         grad_zs = []
-        for i in range(Xtensor.shape[0]):
-            grad_z_vec = self.grad_z(Xtensor[i:i+1], ytensor[i:i+1])
-            grad_zs.append(grad_z_vec)
+        for i, data in enumerate(train_loader):
+            Xtensor, ytensor = data
+            grad_zs.extend(self._data_influence(Xtensor, ytensor))
             # display_progress(
             #     "Calc. grad_z: ", i, Xtensor.shape[0]-i)
 
-        if cache == True:
-            self.influence = grad_zs
-        else:
-            return grad_zs
+        self.influence = grad_zs
+        
+    def _data_influence(self, X, y):
+        grad_zs = []
+
+        for i in range(X.shape[0]):
+                grad_z_vec = self.grad_z(X[i:i+1], y[i:i+1])
+                grad_zs.append(grad_z_vec)
+
+        return grad_zs
+
         
     def grad_z(self, z, t):
         self.classifier.eval()
@@ -47,8 +52,8 @@ class TracIn(BaseExplainer):
     
     def pred_explanation(self, X, y, X_test, topK=5):
         X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
-        y_test_hat = self.to_np(torch.argmax(self.classifier.predict(X_test_tensor), dim=1))
-        s_test_vec = self.data_influence(X_test, y_test_hat, cache=False)
+        y_test_hat = torch.argmax(self.classifier.predict(X_test_tensor), dim=1).clone().detach()
+        s_test_vec = self._data_influence(X_test_tensor, y_test_hat)
 
         scores = np.array([self.calc_influence_function(s_test_vec[i]) for i in range(len(s_test_vec))])
 

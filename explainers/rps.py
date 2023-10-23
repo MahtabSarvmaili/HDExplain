@@ -33,25 +33,38 @@ class RepresenterPointSelection(BaseExplainer):
             self.model = Sigmoid(classifier.fc.weight.data.detach())
 
 
-    def data_influence(self, X, y, cache=True, lmbd=0.003, epoch=3000, **kwargs):
-        Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
-        if self.gpu:
-            Xtensor = Xtensor.cuda()
-        Xrepresentation = self.classifier.representation(Xtensor).data.detach()
-        pred = self.classifier.predict(Xtensor).data.detach()
+    def data_influence(self, train_loader, cache=True, lmbd=0.003, epoch=3000, **kwargs):
+
+        Xrepresentation = []
+        pred = []
+        for i, data in enumerate(train_loader):
+            Xtensor, _ = data
+            if self.gpu:
+                Xtensor = Xtensor.cuda()
+            Xrepresentation.append(self.classifier.representation(Xtensor).data.detach())
+            pred.append(self.classifier.predict(Xtensor).data.detach())
+
+        Xrepresentation = torch.vstack(Xrepresentation)
+        pred = torch.vstack(pred)
+        
         if self.gpu:
             Xrepresentation = Xrepresentation.cuda()
             pred = pred.cuda()
 
-        if cache == True:
-            alpha = self.retrain(Xrepresentation, pred, self.model, lmbd, epoch)
-            self.influence = (alpha, self.to_np(Xrepresentation))
-        else:
-            pred_label = self.to_np(F.one_hot(torch.argmax(pred, dim=1)))
-            return pred_label, self.to_np(Xrepresentation)
+        alpha = self.retrain(Xrepresentation, pred, self.model, lmbd, epoch)
+        self.influence = (alpha, self.to_np(Xrepresentation))
+        
+    def _data_influence(self, X):
+        Xtensor = X
+        if self.gpu:
+            Xtensor = Xtensor.cuda()
+        Xrepresentation = self.classifier.representation(Xtensor).data.detach()
+        pred = self.classifier.predict(Xtensor).data.detach()
+        return self.to_np(F.one_hot(torch.argmax(pred, dim=1))), self.to_np(Xrepresentation)
         
     def pred_explanation(self, X, y, X_test, topK=5):
-        test_pred_label, test_representation = self.data_influence(X_test, None, cache=False)
+        X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
+        test_pred_label, test_representation = self._data_influence(X_test_tensor)
         alpha, train_representation = self.influence
         alpha_j = np.matmul(alpha, test_pred_label.T)
 

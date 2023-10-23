@@ -13,13 +13,14 @@ class InfluenceFunction(BaseExplainer):
     def __init__(self, classifier, n_classes, gpu=False):
         super(InfluenceFunction,self).__init__(classifier, n_classes, gpu)
 
-    def data_influence(self, X, y, cache=True, **kwargs):
-        Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
-        ytensor = torch.from_numpy(np.array(y, dtype=np.int_))
+    def data_influence(self, train_loader, cache=True, **kwargs):
+        
         grad_zs = []
-        for i in range(Xtensor.shape[0]):
-            grad_z_vec = self.grad_z(Xtensor[i:i+1], ytensor[i:i+1])
-            grad_zs.append(grad_z_vec)
+        for i, data in enumerate(train_loader):
+            Xtensor, ytensor = data
+            for i in range(Xtensor.shape[0]):
+                grad_z_vec = self.grad_z(Xtensor[i:i+1], ytensor[i:i+1])
+                grad_zs.append(grad_z_vec)
 
         if cache == True:
             self.influence = grad_zs
