@@ -18,3 +18,7 @@ class BaseExplainer(object):
     @abstractmethod
     def pred_explanation(self, X, y, X_test, topK=5):
         pass
+
+    @abstractmethod
+    def data_debugging(self, X, y):
+        pass

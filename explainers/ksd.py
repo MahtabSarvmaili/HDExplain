@@ -78,3 +78,13 @@ class KSDExplainer(BaseExplainer):
         DXY = self.influence
         ksd = self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 1, 1, 1)
         return np.argpartition(ksd, -topK, axis=1)[:, -topK:], ksd
+    
+    def data_debugging(self, X, y):
+        DXY_test, yonehot_test = self.inference_transfer(X)
+        yonehot = F.one_hot(torch.tensor(y), num_classes=self.n_classes).detach().numpy()
+        D_test = np.hstack([X,yonehot_test])
+        D = np.hstack([X,yonehot])
+        DXY = self.influence
+        ksd = self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 1, 1, 1)
+
+        return np.sorted(np.diag(ksd))

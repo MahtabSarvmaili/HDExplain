@@ -53,6 +53,11 @@ class TracIn(BaseExplainer):
         scores = np.array([self.calc_influence_function(s_test_vec[i]) for i in range(len(s_test_vec))])
 
         return np.argpartition(scores, -topK, axis=1)[:, -topK:], scores
+    
+    def data_debugging(self, X, y):
+        # TracIn does not have data debugging setting
+        return None
+
 
     def calc_influence_function(self, e_s_test):
 

@@ -40,6 +40,17 @@ class InfluenceFunction(BaseExplainer):
         scores = np.array([self.calc_influence_function(s_test_vec[i]) for i in range(len(s_test_vec))])
 
         return np.argpartition(scores, -topK, axis=1)[:, -topK:], scores
+    
+    def data_debugging(self, X, y):
+        Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
+        ytensor = torch.from_numpy(np.array(y, dtype=np.int_))
+        y_pred_tensor = torch.argmax(self.classifier.predict(Xtensor), dim=1).detach()
+
+        s_test_vec = self.calc_s_test(Xtensor, y_pred_tensor, Xtensor, ytensor)
+
+        scores = np.array([self.calc_influence_function(s_test_vec[i]) for i in range(len(s_test_vec))])
+
+        return np.sorted(np.diag(scores))[::-1]
 
 
     def grad_z(self, z, t):

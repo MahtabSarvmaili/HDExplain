@@ -59,6 +59,14 @@ class RepresenterPointSelection(BaseExplainer):
 
         scores = (representation_similarity * alpha_j).T
         return np.argpartition(scores, -topK, axis=1)[:, -topK:], scores
+    
+
+    def data_debugging(self, X, y):
+        alpha, _ = self.influence
+
+        alpha_j = alpha[range(alpha.shape[0]), y]
+
+        return np.sorted(np.diag(alpha_j))[::-1]
 
 
     def to_np(self, x):
