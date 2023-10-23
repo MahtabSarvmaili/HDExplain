@@ -20,8 +20,6 @@ class InfluenceFunction(BaseExplainer):
         for i in range(Xtensor.shape[0]):
             grad_z_vec = self.grad_z(Xtensor[i:i+1], ytensor[i:i+1])
             grad_zs.append(grad_z_vec)
-            # display_progress(
-            #     "Calc. grad_z: ", i, Xtensor.shape[0]-i)
 
         if cache == True:
             self.influence = grad_zs
