@@ -21,14 +21,14 @@ class KSDExplainer(BaseExplainer):
         output = torch.sum(log_pred_prob)
         gradients = torch.autograd.grad(output, xbackpropable)[0]
 
-        DXY = np.hstack([gradients.detach().numpy(),
-                        pred.detach().numpy()])
+        DXY = np.hstack([self.to_np(gradients),
+                        self.to_np(pred)])
 
         if cache == True:
             self.influence = DXY
         else:
             return (DXY, 
-                    yonehot.detach().numpy()
+                    self.to_np(yonehot)
                     )
 
     @staticmethod
@@ -54,7 +54,7 @@ class KSDExplainer(BaseExplainer):
 
 
     def data_model_discrepancy(self, X, y):
-        yonehot = F.one_hot(torch.tensor(y), num_classes=self.n_classes).detach().numpy()
+        yonehot = self.to_np(F.one_hot(torch.tensor(y), num_classes=self.n_classes))
         D = np.hstack([X,yonehot])
         DXY = self.influence
         pyx = np.ones(X.shape[0])
@@ -67,12 +67,12 @@ class KSDExplainer(BaseExplainer):
 
     def inference_transfer(self, X):
         Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
-        y_hat = torch.argmax(self.classifier.predict(Xtensor), dim=1).detach()
+        y_hat = self.to_np(torch.argmax(self.classifier.predict(Xtensor), dim=1))
         return self.data_influence(X, y_hat, cache=False)
     
     def pred_explanation(self, X, y, X_test, topK=5):
         DXY_test, yonehot_test = self.inference_transfer(X_test)
-        yonehot = F.one_hot(torch.tensor(y), num_classes=self.n_classes).detach().numpy()
+        yonehot = self.to_np(F.one_hot(torch.tensor(y), num_classes=self.n_classes))
         D_test = np.hstack([X_test,yonehot_test])
         D = np.hstack([X,yonehot])
         DXY = self.influence
@@ -81,7 +81,7 @@ class KSDExplainer(BaseExplainer):
     
     def data_debugging(self, X, y):
         DXY_test, yonehot_test = self.inference_transfer(X)
-        yonehot = F.one_hot(torch.tensor(y), num_classes=self.n_classes).detach().numpy()
+        yonehot = self.to_np(F.one_hot(torch.tensor(y), num_classes=self.n_classes))
         D_test = np.hstack([X,yonehot_test])
         D = np.hstack([X,yonehot])
         DXY = self.influence

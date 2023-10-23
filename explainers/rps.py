@@ -45,10 +45,10 @@ class RepresenterPointSelection(BaseExplainer):
 
         if cache == True:
             alpha = self.retrain(Xrepresentation, pred, self.model, lmbd, epoch)
-            self.influence = (alpha, Xrepresentation.cpu().numpy())
+            self.influence = (alpha, self.to_np(Xrepresentation))
         else:
-            pred_label = F.one_hot(torch.argmax(pred, dim=1)).data.detach().cpu().numpy()
-            return pred_label, Xrepresentation.numpy()
+            pred_label = self.to_np(F.one_hot(torch.argmax(pred, dim=1)))
+            return pred_label, self.to_np(Xrepresentation)
         
     def pred_explanation(self, X, y, X_test, topK=5):
         test_pred_label, test_representation = self.data_influence(X_test, None, cache=False)
@@ -58,8 +58,7 @@ class RepresenterPointSelection(BaseExplainer):
         representation_similarity = np.matmul(train_representation, test_representation.T)
 
         scores = (representation_similarity * alpha_j).T
-        return np.argpartition(scores, -topK, axis=1)[:, -topK:], scores
-    
+        return np.argpartition(scores, -topK, axis=1)[:, -topK:], scores 
 
     def data_debugging(self, X, y):
         alpha, _ = self.influence
@@ -67,13 +66,6 @@ class RepresenterPointSelection(BaseExplainer):
         alpha_j = alpha[range(alpha.shape[0]), y]
 
         return np.sorted(np.diag(alpha_j))[::-1]
-
-
-    def to_np(self, x):
-        if self.gpu:
-            return x.data.cpu().numpy()
-        else:
-            return x.data.numpy()
 
     def retrain(self, x, y, model, lmbd, epoch):
         # Fine tune the last layer

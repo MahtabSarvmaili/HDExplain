@@ -22,3 +22,9 @@ class BaseExplainer(object):
     @abstractmethod
     def data_debugging(self, X, y):
         pass
+
+    def to_np(self, x):
+        if self.gpu:
+            return x.data.cpu().numpy()
+        else:
+            return x.data.numpy()

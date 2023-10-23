@@ -47,7 +47,7 @@ class TracIn(BaseExplainer):
     
     def pred_explanation(self, X, y, X_test, topK=5):
         X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
-        y_test_hat = torch.argmax(self.classifier.predict(X_test_tensor), dim=1).detach().numpy()
+        y_test_hat = self.to_np(torch.argmax(self.classifier.predict(X_test_tensor), dim=1))
         s_test_vec = self.data_influence(X_test, y_test_hat, cache=False)
 
         scores = np.array([self.calc_influence_function(s_test_vec[i]) for i in range(len(s_test_vec))])
@@ -70,7 +70,7 @@ class TracIn(BaseExplainer):
                     # TODO: verify if computation really needs to be done
                     # on the CPU or if GPU would work, too
                     ###################################
-                    torch.sum(k * j).data.cpu().numpy()
+                    self.to_np(torch.sum(k * j))
                     for k, j in zip(self.influence[i], e_s_test)
                     ###################################
                     # Originally with [i] because each grad_z contained
