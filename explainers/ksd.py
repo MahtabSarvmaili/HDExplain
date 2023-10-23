@@ -86,21 +86,34 @@ class KSDExplainer(BaseExplainer):
         y_hat = torch.argmax(self.classifier.predict(Xtensor), dim=1)
         return self._data_influence(Xtensor, y_hat)
     
-    def pred_explanation(self, X, y, X_test, topK=5):
+    def pred_explanation(self, train_loader, X_test, topK=5):
         DXY_test, yonehot_test = self.inference_transfer(X_test)
-        yonehot = self.to_np(F.one_hot(torch.tensor(y), num_classes=self.n_classes))
         D_test = np.hstack([X_test,yonehot_test])
-        D = np.hstack([X,yonehot])
+
+        D = []
+        for X,y in train_loader: 
+            yonehot = self.to_np(F.one_hot(y, num_classes=self.n_classes))
+            D.append(np.hstack([self.to_np(X),yonehot]))
+        D = np.vstack(D)
+
         DXY = self.influence
         ksd = self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 1, 1, 1)
         return np.argpartition(ksd, -topK, axis=1)[:, -topK:], ksd
     
-    def data_debugging(self, X, y):
-        DXY_test, yonehot_test = self.inference_transfer(X)
-        yonehot = self.to_np(F.one_hot(torch.tensor(y), num_classes=self.n_classes))
-        D_test = np.hstack([X,yonehot_test])
-        D = np.hstack([X,yonehot])
-        DXY = self.influence
-        ksd = self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 1, 1, 1)
+    def data_debugging(self, train_loader):
+        ksd = []
+        for X,y in train_loader:
+            DXY_test, yonehot_test = self.inference_transfer(X)
+            D_test = np.hstack([self.to_np(X),yonehot_test])
 
+            D = []
+            for Xt, yt in train_loader:
+                yonehot = self.to_np(F.one_hot(yt, num_classes=self.n_classes))
+                D = D.append(np.hstack([self.to_np(Xt),yonehot]))
+            D = np.vstack(D)
+            DXY = self.influence
+            ksd.append(self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 1, 1, 1))
+        
+        ksd = np.vstack(ksd)
+        
         return np.sorted(np.diag(ksd))

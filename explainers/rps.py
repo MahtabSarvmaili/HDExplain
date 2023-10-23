@@ -62,7 +62,7 @@ class RepresenterPointSelection(BaseExplainer):
         pred = self.classifier.predict(Xtensor).data.detach()
         return self.to_np(F.one_hot(torch.argmax(pred, dim=1))), self.to_np(Xrepresentation)
         
-    def pred_explanation(self, X, y, X_test, topK=5):
+    def pred_explanation(self, train_loader, X_test, topK=5):
         X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
         test_pred_label, test_representation = self._data_influence(X_test_tensor)
         alpha, train_representation = self.influence
@@ -73,7 +73,14 @@ class RepresenterPointSelection(BaseExplainer):
         scores = (representation_similarity * alpha_j).T
         return np.argpartition(scores, -topK, axis=1)[:, -topK:], scores 
 
-    def data_debugging(self, X, y):
+    def data_debugging(self, train_loader):
+
+        y = []
+        for _, ytensor in train_loader:
+            y.append(ytensor)
+
+        y = self.to_np(torch.vstack(y))
+
         alpha, _ = self.influence
 
         alpha_j = alpha[range(alpha.shape[0]), y]

@@ -50,7 +50,7 @@ class TracIn(BaseExplainer):
             y, t, weight=None, reduction='mean')
         return loss
     
-    def pred_explanation(self, X, y, X_test, topK=5):
+    def pred_explanation(self, train_loader, X_test, topK=5):
         X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
         y_test_hat = torch.argmax(self.classifier.predict(X_test_tensor), dim=1).clone().detach()
         s_test_vec = self._data_influence(X_test_tensor, y_test_hat)
@@ -59,7 +59,7 @@ class TracIn(BaseExplainer):
 
         return np.argpartition(scores, -topK, axis=1)[:, -topK:], scores
     
-    def data_debugging(self, X, y):
+    def data_debugging(self, train_loader):
         # TracIn does not have data debugging setting
         return None
 

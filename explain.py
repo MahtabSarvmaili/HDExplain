@@ -34,7 +34,7 @@ def main(args):
         X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
         y_hat = torch.argmax(model.predict(X_test_tensor), dim=1).detach().numpy()
         
-        _, influence_scores = explainer.pred_explanation(X, y, X_test, topK=3)
+        _, influence_scores = explainer.pred_explanation(dataloader, X_test, topK=3)
 
         bound = np.max([np.abs(np.min(influence_scores)), np.abs(np.max(influence_scores))])
 

@@ -27,25 +27,23 @@ class InfluenceFunction(BaseExplainer):
         else:
             return grad_zs
         
-    def pred_explanation(self, X, y, X_test, topK=5):
+    def pred_explanation(self, train_loader, X_test, topK=5):
         X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
         y_test_hat = torch.argmax(self.classifier.predict(X_test_tensor), dim=1).detach()
 
-        Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
-        ytensor = torch.from_numpy(np.array(y, dtype=np.int_))
-
-        s_test_vec = self.calc_s_test(X_test_tensor, y_test_hat, Xtensor, ytensor)
+        s_test_vec = self.calc_s_test(X_test_tensor, y_test_hat, train_loader)
 
         scores = np.array([self.calc_influence_function(s_test_vec[i]) for i in range(len(s_test_vec))])
 
         return np.argpartition(scores, -topK, axis=1)[:, -topK:], scores
     
-    def data_debugging(self, X, y):
-        Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
-        ytensor = torch.from_numpy(np.array(y, dtype=np.int_))
-        y_pred_tensor = torch.argmax(self.classifier.predict(Xtensor), dim=1).detach()
+    def data_debugging(self, train_loader):
 
-        s_test_vec = self.calc_s_test(Xtensor, y_pred_tensor, Xtensor, ytensor)
+        s_test_vec = []
+        for Xtensor, _ in train_loader:
+            y_pred_tensor = torch.argmax(self.classifier.predict(Xtensor), dim=1).detach()
+
+            s_test_vec.extend(self.calc_s_test(Xtensor, y_pred_tensor, train_loader))
 
         scores = np.array([self.calc_influence_function(s_test_vec[i]) for i in range(len(s_test_vec))])
 
@@ -69,12 +67,12 @@ class InfluenceFunction(BaseExplainer):
             y, t, weight=None, reduction='mean')
         return loss
     
-    def calc_s_test(self,  X_test, y_test, X, y,
+    def calc_s_test(self,  X_test, y_test, train_loader,
                 damp=0.01, scale=25, recursion_depth=10, r=1):
 
         s_tests = []
         for i in range(X_test.shape[0]):
-            s_test_vec = self.calc_s_test_single(X_test[i:i+1], y_test[i:i+1], X, y,
+            s_test_vec = self.calc_s_test_single(X_test[i:i+1], y_test[i:i+1], train_loader,
                                                  damp, scale, recursion_depth, r)
 
             s_tests.append(s_test_vec)
@@ -83,13 +81,13 @@ class InfluenceFunction(BaseExplainer):
 
         return s_tests
     
-    def calc_s_test_single(self, z_test, t_test, X, y,
+    def calc_s_test_single(self, z_test, t_test, train_loader,
                        damp=0.01, scale=25, recursion_depth=5, r=1):
         
-        all = self.s_test(z_test, t_test, X, y, damp=damp, scale=scale,
+        all = self.s_test(z_test, t_test, train_loader, damp=damp, scale=scale,
                  recursion_depth=recursion_depth)
         for i in range(1, r):
-            cur = self.s_test(z_test, t_test, X, y, damp=damp, scale=scale,
+            cur = self.s_test(z_test, t_test, train_loader, damp=damp, scale=scale,
             recursion_depth=recursion_depth)
             all = [a + c for a, c in zip(all, cur)]
             display_progress("Averaging r-times: ", i, r)    
@@ -99,17 +97,15 @@ class InfluenceFunction(BaseExplainer):
         return s_test_vec
 
     
-    def s_test(self, z_test, t_test, X, y, damp=0.01, scale=25.0,
+    def s_test(self, z_test, t_test, train_loader, damp=0.01, scale=25.0,
            recursion_depth=5):
         v = self.grad_z(z_test, t_test)
         h_estimate = v.copy()
 
         for j in range(recursion_depth):
-            for i in range(X.shape[0]):
+            for Xtensor, ytensor in train_loader:
                 if self.gpu:
-                    Xtensor, ytensor = X[i:i+1].cuda(), y[i:i+1].cuda()
-                else:
-                    Xtensor, ytensor = X[i:i+1], y[i:i+1]
+                    Xtensor, ytensor = Xtensor.cuda(), ytensor.cuda()
                 y_hat = self.classifier.predict(Xtensor)
                 loss = self.calc_loss(y_hat, ytensor)
                 params = [ p for p in self.classifier.parameters() if p.requires_grad ]
