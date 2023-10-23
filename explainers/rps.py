@@ -8,9 +8,9 @@ import numpy as np
 
 from explainers import BaseExplainer
 
-class sigmoid(nn.Module):
+class Sigmoid(nn.Module):
     def __init__(self, W):
-        super(sigmoid, self).__init__()
+        super(Sigmoid, self).__init__()
         self.W = Variable(W, requires_grad=True)
 
     def forward(self, x):
@@ -27,19 +27,28 @@ class RepresenterPointSelection(BaseExplainer):
         super(RepresenterPointSelection,self).__init__(classifier, n_classes, gpu)
         if self.gpu:
             self.dtype = torch.cuda.FloatTensor
+            self.model = Sigmoid(classifier.fc.weight.data.cpu().detach()).cuda()
         else:
             self.dtype = torch.FloatTensor
+            self.model = Sigmoid(classifier.fc.weight.data.detach())
 
-    def data_influence(self, X, y, cache=True):
+
+    def data_influence(self, X, y, cache=True, lmbd=0.003, epoch=3000, **kwargs):
         Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
         if self.gpu:
             Xtensor = Xtensor.cuda()
-        pred = self.classifier.predict(Xtensor)
+        Xrepresentation = self.classifier.representation(Xtensor).data.detach()
+        pred = self.classifier.predict(Xtensor).data.detach()
         if self.gpu:
+            Xrepresentation = Xrepresentation.cuda()
             pred = pred.cuda()
-        pred.requires_grad = False
 
-        #TO BE CONTINUED
+        alpha = self.retrain(Xrepresentation, pred, self.model, lmbd, epoch)
+
+        if cache == True:
+            self.influence = (alpha, Xrepresentation.numpy())
+        else:
+            return Xrepresentation.numpy()
 
     def to_np(self, x):
         if self.gpu:

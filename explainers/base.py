@@ -12,7 +12,7 @@ class BaseExplainer(object):
         self.classifier.eval()
 
     @abstractmethod   
-    def data_influence(self, X, y, cache=True):
+    def data_influence(self, X, y, cache=True, **kwargs):
         pass
 
     @abstractmethod

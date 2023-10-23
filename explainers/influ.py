@@ -13,7 +13,7 @@ class InfluenceFunction(BaseExplainer):
     def __init__(self, classifier, n_classes, gpu=False):
         super(InfluenceFunction,self).__init__(classifier, n_classes, gpu)
 
-    def data_influence(self, X, y, cache=True):
+    def data_influence(self, X, y, cache=True, **kwargs):
         Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
         ytensor = torch.from_numpy(np.array(y, dtype=np.int_))
         grad_zs = []

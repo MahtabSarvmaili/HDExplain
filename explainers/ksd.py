@@ -10,7 +10,7 @@ class KSDExplainer(BaseExplainer):
     def __init__(self, classifier, n_classes, gpu=False):
         super(KSDExplainer,self).__init__(classifier, n_classes, gpu)
 
-    def data_influence(self, X, y, cache=True):
+    def data_influence(self, X, y, cache=True, **kwargs):
         yonehot = F.one_hot(torch.tensor(y), num_classes=self.n_classes)
         # print(yonehot)
         xbackpropable = torch.from_numpy(np.array(X, dtype=np.float32))

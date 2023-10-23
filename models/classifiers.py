@@ -10,11 +10,11 @@ class SimpleNet(nn.Module):
         super(SimpleNet, self).__init__()
         self.fc1 = nn.Linear(feature_dim, latent_dim)
         self.fc2 = nn.Linear(latent_dim, latent_dim)
-        self.fc3 = nn.Linear(latent_dim, n_classes)
+        self.fc = nn.Linear(latent_dim, n_classes)
 
     def forward(self, x):
         x = self.representation(x)
-        x = self.fc3(x)
+        x = self.fc(x)
         return x
     
     def representation(self, x):
