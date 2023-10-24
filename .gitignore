@@ -161,6 +161,7 @@ cython_debug/
 
 # data
 datasets/
+data/
 checkpoints/
 
 .DS_Store

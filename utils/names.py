@@ -1,6 +1,6 @@
 from explainers import *
 from models.classifiers import SimpleNet, resnet18
-from dataloaders import rectangular, moon
+from dataloaders import rectangular, moon, cifar10
 
 
 explainers = {
@@ -18,4 +18,8 @@ networks = {
 synthetic_data = {
     "Moon": moon,
     "Rectangular": rectangular
+}
+
+real_data = {
+    "CIFAR10": cifar10
 }
