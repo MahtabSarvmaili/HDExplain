@@ -10,7 +10,7 @@ from explainers import BaseExplainer
 
 
 class InfluenceFunction(BaseExplainer):
-    def __init__(self, classifier, n_classes, gpu=False):
+    def __init__(self, classifier, n_classes, gpu=False, **kwargs):
         super(InfluenceFunction,self).__init__(classifier, n_classes, gpu)
 
     def data_influence(self, train_loader, cache=True, **kwargs):

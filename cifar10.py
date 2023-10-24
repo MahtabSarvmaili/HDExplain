@@ -16,7 +16,7 @@ def main(args):
         torch.load("checkpoints/{0}-{1}-{2}.pt".format(args.network, 
                                                     args.data, 
                                                     args.n_classes)))
-    explainer = explainers[args.explainer](model, args.n_classes, gpu=args.gpu)
+    explainer = explainers[args.explainer](model, args.n_classes, gpu=args.gpu, scale=args.scale)
 
     train_loader, test_loader, class_names = real_data[args.data](n_test_sample=10)
 
@@ -45,5 +45,6 @@ if __name__ == "__main__":
     parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=10)
     parser.add_argument('-explainer', dest='explainer', default="YADEA")
     parser.add_argument('--gpu', dest='gpu', action='store_true')
+    parser.add_argument('--scale', dest='scale', action='store_true')
     args = parser.parse_args()
     main(args)

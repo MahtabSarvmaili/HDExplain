@@ -1,17 +1,37 @@
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.autograd import grad
 from utils.progress import display_progress
 
 import numpy as np
+import copy
 
 from explainers import BaseExplainer
 
 
+class Sigmoid(nn.Module):
+    def __init__(self, fc):
+        super(Sigmoid, self).__init__()
+        self.fc = copy.deepcopy(fc)
+
+    def forward(self, x):
+        x = self.fc(x)
+        return x
+
+    def predict(self, x):
+      logit = self.forward(x)
+      return F.softmax(logit, dim=1)
+    
+
+
 class TracIn(BaseExplainer):
-    def __init__(self, classifier, n_classes, gpu=False):
+    def __init__(self, classifier, n_classes, gpu=False, scale=False, **kwargs):
         super(TracIn,self).__init__(classifier, n_classes, gpu)
+        self.last_layer = False
+        if scale:
+            self.last_layer =True
 
     def data_influence(self, train_loader, cache=True, **kwargs):
         grad_zs = []
@@ -32,14 +52,20 @@ class TracIn(BaseExplainer):
 
         
     def grad_z(self, z, t):
+
         self.classifier.eval()
+
         # initialize
         if self.gpu:
             z, t = z.cuda(), t.cuda()
+
         y = self.classifier.predict(z)
         loss = self.calc_loss(y, t)
         # Compute sum of gradients from model parameters to loss
-        params = [ p for p in self.classifier.parameters() if p.requires_grad ]
+        if self.last_layer:
+            params = [ p for p in self.classifier.fc.parameters() if p.requires_grad ]
+        else:
+            params = [ p for p in self.classifier.parameters() if p.requires_grad ]
         return list(grad(loss, params, create_graph=True))
     
     @staticmethod
@@ -50,6 +76,8 @@ class TracIn(BaseExplainer):
     
     def pred_explanation(self, train_loader, X_test, topK=5):
         X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
+        if self.gpu:
+            X_test_tensor = X_test_tensor.cuda()
         y_test_hat = torch.argmax(self.classifier.predict(X_test_tensor), dim=1).clone().detach()
         s_test_vec = self._data_influence(X_test_tensor, y_test_hat)
 

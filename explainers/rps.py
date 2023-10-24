@@ -23,7 +23,7 @@ class Sigmoid(nn.Module):
     
 
 class RepresenterPointSelection(BaseExplainer):
-    def __init__(self, classifier, n_classes, gpu=False):
+    def __init__(self, classifier, n_classes, gpu=False, **kwargs):
         super(RepresenterPointSelection,self).__init__(classifier, n_classes, gpu)
         if self.gpu:
             self.dtype = torch.cuda.FloatTensor

@@ -8,7 +8,7 @@ from explainers import BaseExplainer
 
 
 class KSDExplainer(BaseExplainer):
-    def __init__(self, classifier, n_classes, gpu=False):
+    def __init__(self, classifier, n_classes, gpu=False, **kwargs):
         super(KSDExplainer,self).__init__(classifier, n_classes, gpu)
 
     def data_influence(self, train_loader, cache=True, **kwargs):
