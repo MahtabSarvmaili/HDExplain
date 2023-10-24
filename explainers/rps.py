@@ -27,7 +27,7 @@ class RepresenterPointSelection(BaseExplainer):
         super(RepresenterPointSelection,self).__init__(classifier, n_classes, gpu)
         if self.gpu:
             self.dtype = torch.cuda.FloatTensor
-            self.model = Sigmoid(classifier.fc.weight.data.cpu().detach()).cuda()
+            self.model = Sigmoid(classifier.fc.weight.data.cpu().detach().cuda())
         else:
             self.dtype = torch.FloatTensor
             self.model = Sigmoid(classifier.fc.weight.data.detach())

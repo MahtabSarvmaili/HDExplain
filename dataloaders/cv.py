@@ -33,7 +33,6 @@ def cifar10(n_test_sample, random_state=42):
     G = torch.Generator()
     G.manual_seed(random_state)
     sampler = torch.utils.data.RandomSampler(testset, replacement=False, 
-                                             num_samples=n_test_sample, 
                                              generator=G)
     
     testloader = torch.utils.data.DataLoader(

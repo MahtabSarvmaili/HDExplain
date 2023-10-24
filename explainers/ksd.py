@@ -16,6 +16,9 @@ class KSDExplainer(BaseExplainer):
         DXY = []
         for data in tqdm(train_loader):
             Xtensor, ytensor = data
+            if self.gpu:
+                Xtensor = Xtensor.cuda()
+                ytensor = ytensor.cuda()
             yonehot = F.one_hot(ytensor, num_classes=self.n_classes)
             # print(yonehot)
             xbackpropable = Xtensor.clone().detach()
@@ -84,6 +87,8 @@ class KSDExplainer(BaseExplainer):
 
     def inference_transfer(self, X):
         Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
+        if self.gpu:
+            Xtensor = Xtensor.cuda()
         y_hat = torch.argmax(self.classifier.predict(Xtensor), dim=1)
         return self._data_influence(Xtensor, y_hat)
     

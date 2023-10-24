@@ -1,3 +1,4 @@
+import torch
 from abc import ABC, abstractmethod
 
 
@@ -8,6 +9,8 @@ class BaseExplainer(object):
         self.influence = None
         self.gpu = gpu
         
+        if self.gpu:
+            self.classifier.to(torch.device("cuda"))
         # set model to eval mode
         self.classifier.eval()
 
