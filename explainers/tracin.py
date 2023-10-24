@@ -18,8 +18,6 @@ class TracIn(BaseExplainer):
         for i, data in enumerate(train_loader):
             Xtensor, ytensor = data
             grad_zs.extend(self._data_influence(Xtensor, ytensor))
-            # display_progress(
-            #     "Calc. grad_z: ", i, Xtensor.shape[0]-i)
 
         self.influence = grad_zs
         

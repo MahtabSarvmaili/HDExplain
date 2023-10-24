@@ -60,7 +60,7 @@ class RepresenterPointSelection(BaseExplainer):
             Xtensor = Xtensor.cuda()
         Xrepresentation = self.classifier.representation(Xtensor).data.detach()
         pred = self.classifier.predict(Xtensor).data.detach()
-        return self.to_np(F.one_hot(torch.argmax(pred, dim=1))), self.to_np(Xrepresentation)
+        return self.to_np(F.one_hot(torch.argmax(pred, dim=1), num_classes=self.n_classes)), self.to_np(Xrepresentation)
         
     def pred_explanation(self, train_loader, X_test, topK=5):
         X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
