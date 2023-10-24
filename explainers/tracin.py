@@ -66,7 +66,7 @@ class TracIn(BaseExplainer):
             params = [ p for p in self.classifier.fc.parameters() if p.requires_grad ]
         else:
             params = [ p for p in self.classifier.parameters() if p.requires_grad ]
-        return list(grad(loss, params, create_graph=True))
+        return list(grad(loss, params))
     
     @staticmethod
     def calc_loss(y, t):

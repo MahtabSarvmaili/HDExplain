@@ -10,8 +10,11 @@ from explainers import BaseExplainer
 
 
 class InfluenceFunction(BaseExplainer):
-    def __init__(self, classifier, n_classes, gpu=False, **kwargs):
+    def __init__(self, classifier, n_classes, gpu=False, scale=False, **kwargs):
         super(InfluenceFunction,self).__init__(classifier, n_classes, gpu)
+        self.last_layer = False
+        if scale:
+            self.last_layer =True
 
     def data_influence(self, train_loader, cache=True, **kwargs):
         
@@ -29,6 +32,8 @@ class InfluenceFunction(BaseExplainer):
         
     def pred_explanation(self, train_loader, X_test, topK=5):
         X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
+        if self.gpu:
+            X_test_tensor = X_test_tensor.cuda()
         y_test_hat = torch.argmax(self.classifier.predict(X_test_tensor), dim=1).detach()
 
         s_test_vec = self.calc_s_test(X_test_tensor, y_test_hat, train_loader)
@@ -51,15 +56,21 @@ class InfluenceFunction(BaseExplainer):
 
 
     def grad_z(self, z, t):
+
         self.classifier.eval()
+
         # initialize
         if self.gpu:
             z, t = z.cuda(), t.cuda()
+
         y = self.classifier.predict(z)
         loss = self.calc_loss(y, t)
         # Compute sum of gradients from model parameters to loss
-        params = [ p for p in self.classifier.parameters() if p.requires_grad ]
-        return list(grad(loss, params, create_graph=True))
+        if self.last_layer:
+            params = [ p for p in self.classifier.fc.parameters() if p.requires_grad ]
+        else:
+            params = [ p for p in self.classifier.parameters() if p.requires_grad ]
+        return list(grad(loss, params))
     
     @staticmethod
     def calc_loss(y, t):
@@ -108,7 +119,10 @@ class InfluenceFunction(BaseExplainer):
                     Xtensor, ytensor = Xtensor.cuda(), ytensor.cuda()
                 y_hat = self.classifier.predict(Xtensor)
                 loss = self.calc_loss(y_hat, ytensor)
-                params = [ p for p in self.classifier.parameters() if p.requires_grad ]
+                if self.last_layer:
+                    params = [ p for p in self.classifier.fc.parameters() if p.requires_grad ]
+                else:
+                    params = [ p for p in self.classifier.parameters() if p.requires_grad ]
                 hv = self.hvp(loss, params, h_estimate)
                 # Recursively caclulate h_estimate
                 h_estimate = [
@@ -132,7 +146,7 @@ class InfluenceFunction(BaseExplainer):
             elemwise_products += torch.sum(grad_elem * v_elem)
 
         # Second backprop
-        return_grads = grad(elemwise_products, w, create_graph=True)
+        return_grads = grad(elemwise_products, w)
 
         return return_grads
     

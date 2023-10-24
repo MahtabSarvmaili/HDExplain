@@ -33,8 +33,9 @@ def main(args):
 
     instances = explain_instance(train_loader.dataset, X_test_tensor, y_hat, top_explaination)
 
-    import ipdb; ipdb.set_trace()
-
+    for i in range(len(instances)):
+        plot_explanation_images(instances[i], class_names, 
+                                name="{0}-{1}-{2}.pdf".format(args.explainer, args.data, i))
         
 
 if __name__ == "__main__":
