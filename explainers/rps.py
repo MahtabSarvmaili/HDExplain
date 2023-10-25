@@ -79,13 +79,11 @@ class RepresenterPointSelection(BaseExplainer):
         for _, ytensor in train_loader:
             y.append(ytensor)
 
-        y = self.to_np(torch.vstack(y))
-
+        y = self.to_np(torch.concatenate(y))
         alpha, _ = self.influence
+        alpha_j = alpha[range(alpha.shape[0]), y]        
+        return -alpha_j, np.argsort(alpha_j)[::-1]
 
-        alpha_j = alpha[range(alpha.shape[0]), y]
-
-        return np.sorted(np.diag(alpha_j))[::-1]
 
     def retrain(self, x, y, model, lmbd, epoch):
         # Fine tune the last layer

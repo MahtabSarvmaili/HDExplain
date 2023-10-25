@@ -41,6 +41,34 @@ def ksd_distribution(ksd_scores, name="ksd_dist.pdf"):
   plt.savefig("plots/{0}".format(name), format='pdf')
 
 
+def data_debug_2d(X, y, scores, name="ksd_debug.pdf"):
+    fig, axs = plt.subplots(1,2, figsize=(8,4))
+
+    for i, ax in enumerate(axs):
+        # When the label y is 0, the class is represented with a blue square.
+        # When the label y is 1, the class is represented with a green triangle.
+        ax.scatter(X[:, 0][y==2], X[:, 1][y==2], c=scores[i][y==2], marker="*", cmap='RdYlGn')
+        ax.scatter(X[:, 0][y==1], X[:, 1][y==1], c=scores[i][y==1], marker="+", cmap='RdYlGn')
+        im=ax.scatter(X[:, 0][y==0], X[:, 1][y==0], c=scores[i][y==0], marker="x", cmap='RdYlGn')
+
+        if i == 1:
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=0.05)
+
+        # Simplifying the plot by removing the axis scales.
+        ax.set_xticks([])
+        ax.set_yticks([])
+
+    fig.colorbar(im, cax=cax, orientation='vertical')
+
+    plt.xticks([])
+    plt.yticks([])
+
+    plt.tight_layout()
+
+    plt.savefig("plots/{0}".format(name), format='pdf')
+
+
 def ksd_influence(X, y, x_test, y_test, score, name="ksd_influence.pdf", clip=(-3, 3)):
 
   fig, ax = plt.subplots(figsize=(4,4))

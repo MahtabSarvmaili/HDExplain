@@ -42,7 +42,7 @@ def main(args):
 
 if __name__ == "__main__":
     # Commandline arguments
-    parser = argparse.ArgumentParser(description="LRec")
+    parser = argparse.ArgumentParser(description="Explain")
     parser.add_argument('-network', dest='network', default="ResNet")
     parser.add_argument('-data', dest='data', default="CIFAR10")
     parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=10)

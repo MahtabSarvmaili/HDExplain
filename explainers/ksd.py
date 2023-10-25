@@ -71,6 +71,27 @@ class KSDExplainer(BaseExplainer):
         if return_kernel:
             return weighted_stein_kernel, k
         return weighted_stein_kernel
+    
+    @staticmethod
+    def elementwise_gaussian_stein_kernel(
+        x, y, scores_x, scores_y, pred_prob_x, pred_prob_y, 
+        sigma, return_kernel=False
+    ):
+        _, p = x.shape
+        d = x - y
+        dists = (d ** 2).sum(axis=-1)
+        k = np.exp(-dists / sigma / 2)
+        scalars = (scores_x * scores_y).sum(axis=-1)
+        scores_diffs = scores_x - scores_y
+        # print(f'score diffs: {scores_diffs.shape}')
+        diffs = (d * scores_diffs).sum(axis=-1)
+        der2 = p - dists / sigma
+        stein_kernel = k * (scalars + diffs / sigma + der2 / sigma)
+        weights = pred_prob_x * pred_prob_y
+        weighted_stein_kernel = stein_kernel * weights
+        if return_kernel:
+            return weighted_stein_kernel, k
+        return weighted_stein_kernel
 
 
     def data_model_discrepancy(self, X, y):
@@ -110,19 +131,17 @@ class KSDExplainer(BaseExplainer):
     
     def data_debugging(self, train_loader):
         ksd = []
-        for X,y in train_loader:
-            DXY_test, yonehot_test = self.inference_transfer(X)
-            D_test = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot_test])
+        index = 0
+        for i, (X,y) in enumerate(tqdm(train_loader)):
+            yonehot = self.to_np(F.one_hot(y, num_classes=self.n_classes))
+            D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
 
-            D = []
-            for Xt, yt in train_loader:
-                yonehot = self.to_np(F.one_hot(yt, num_classes=self.n_classes))
-                D = D.append(np.hstack([self.to_np(Xt.reshape(Xt.shape[0], -1)),yonehot]))
-            D = np.vstack(D)
-            DXY = self.influence
-            ksd.append(self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 
-                                                  1, 1, D_test.shape[1]-self.n_classes))
+            DXY = self.influence[index:index+X.shape[0]]
+
+            ksd.append(self.elementwise_gaussian_stein_kernel(D, D, DXY, DXY, 
+                                                  1, 1, D.shape[1]-self.n_classes))
+            index += X.shape[0]
         
-        ksd = np.vstack(ksd)
+        ksd = np.concatenate(ksd)
         
-        return np.sorted(np.diag(ksd))
+        return ksd, np.argsort(ksd)

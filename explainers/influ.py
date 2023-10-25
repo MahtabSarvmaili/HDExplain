@@ -46,13 +46,15 @@ class InfluenceFunction(BaseExplainer):
 
         s_test_vec = []
         for Xtensor, _ in train_loader:
+            if self.gpu:
+                Xtensor = Xtensor.cuda()
             y_pred_tensor = torch.argmax(self.classifier.predict(Xtensor), dim=1).detach()
 
             s_test_vec.extend(self.calc_s_test(Xtensor, y_pred_tensor, train_loader))
 
-        scores = np.array([self.calc_influence_function(s_test_vec[i]) for i in range(len(s_test_vec))])
+        scores = np.array([self.calc_self_influence_function(s_test_vec[i], i) for i in range(len(s_test_vec))])
 
-        return np.sorted(np.diag(scores))[::-1]
+        return -scores, np.argsort(scores)[::-1]
 
 
     def grad_z(self, z, t):
@@ -173,3 +175,24 @@ class InfluenceFunction(BaseExplainer):
             display_progress("Calc. influence function: ", i, train_dataset_size)
 
         return influences
+    
+    def calc_self_influence_function(self, e_s_test, i):
+
+        train_dataset_size = len(self.influence)
+
+        influence = sum(
+            [
+                ###################################
+                # TODO: verify if computation really needs to be done
+                # on the CPU or if GPU would work, too
+                ###################################
+                torch.sum(k * j).data.cpu().numpy()
+                for k, j in zip(self.influence[i], e_s_test)
+                ###################################
+                # Originally with [i] because each grad_z contained
+                # a list of tensors as long as e_s_test list
+                # There is one grad_z per training data sample
+                ###################################
+            ]) 
+
+        return influence

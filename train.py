@@ -24,7 +24,7 @@ def main(args):
 
 if __name__ == "__main__":
     # Commandline arguments
-    parser = argparse.ArgumentParser(description="LRec")
+    parser = argparse.ArgumentParser(description="Train")
     parser.add_argument('-network', dest='network', default="SimpleNet")
     parser.add_argument('-data', dest='data', default="Moon")
     parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=2)

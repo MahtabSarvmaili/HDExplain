@@ -20,7 +20,7 @@ class ClassifierTrainer(object):
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(model.parameters(), lr=0.01)
 
-    def train(self, model, dataloader, name, epochs=100):
+    def train(self, model, dataloader, name="", save=True, epochs=100):
         for epoch in range(epochs):  # loop over the dataset multiple times
             running_loss = 0.0
             for i, data in enumerate(dataloader):
@@ -42,6 +42,7 @@ class ClassifierTrainer(object):
                     print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
                     running_loss = 0.0
 
-        torch.save(model.state_dict(), "checkpoints/{0}.pt".format(name))
+        if save:
+            torch.save(model.state_dict(), "checkpoints/{0}.pt".format(name))
 
         print('Finished Training')
