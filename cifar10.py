@@ -20,7 +20,9 @@ def main(args):
 
     train_loader, test_loader, class_names = real_data[args.data](n_test_sample=10)
 
-    X_test, _ = next(iter(test_loader))
+    X_test, y_test = next(iter(test_loader))
+
+    import ipdb; ipdb.set_trace()
      
     explainer.data_influence(train_loader, cache=True)
 
