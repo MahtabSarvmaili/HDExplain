@@ -5,6 +5,7 @@ from torch.autograd import grad
 from utils.progress import display_progress
 
 import numpy as np
+from tqdm import tqdm
 
 from explainers import BaseExplainer
 
@@ -19,7 +20,7 @@ class InfluenceFunction(BaseExplainer):
     def data_influence(self, train_loader, cache=True, **kwargs):
         
         grad_zs = []
-        for i, data in enumerate(train_loader):
+        for i, data in enumerate(tqdm(train_loader)):
             Xtensor, ytensor = data
             for i in range(Xtensor.shape[0]):
                 grad_z_vec = self.grad_z(Xtensor[i:i+1], ytensor[i:i+1])
@@ -84,13 +85,11 @@ class InfluenceFunction(BaseExplainer):
                 damp=0.01, scale=25, recursion_depth=10, r=1):
 
         s_tests = []
-        for i in range(X_test.shape[0]):
+        for i in tqdm(range(X_test.shape[0])):
             s_test_vec = self.calc_s_test_single(X_test[i:i+1], y_test[i:i+1], train_loader,
                                                  damp, scale, recursion_depth, r)
 
             s_tests.append(s_test_vec)
-            display_progress(
-                "Calc. z_test (s_test): ", i, X_test.shape[0])
 
         return s_tests
     
@@ -103,7 +102,6 @@ class InfluenceFunction(BaseExplainer):
             cur = self.s_test(z_test, t_test, train_loader, damp=damp, scale=scale,
             recursion_depth=recursion_depth)
             all = [a + c for a, c in zip(all, cur)]
-            display_progress("Averaging r-times: ", i, r)    
 
         s_test_vec = [a / r for a in all]
 
@@ -131,7 +129,6 @@ class InfluenceFunction(BaseExplainer):
                     _v + (1 - damp) * _h_e - _hv / scale
                     for _v, _h_e, _hv in zip(v, h_estimate, hv)]
                 break
-            display_progress("Calc. s_test recursions: ", j, recursion_depth)
         return h_estimate
     
     @staticmethod
@@ -156,7 +153,7 @@ class InfluenceFunction(BaseExplainer):
 
         train_dataset_size = len(self.influence)
         influences = []
-        for i in range(train_dataset_size):
+        for i in tqdm(range(train_dataset_size)):
             tmp_influence = sum(
                 [
                     ###################################
@@ -172,7 +169,6 @@ class InfluenceFunction(BaseExplainer):
                     ###################################
                 ]) / train_dataset_size
             influences.append(tmp_influence)
-            display_progress("Calc. influence function: ", i, train_dataset_size)
 
         return influences
     
