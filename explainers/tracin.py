@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.autograd import grad
-from utils.progress import display_progress
 
 import numpy as np
 import copy
@@ -110,6 +109,5 @@ class TracIn(BaseExplainer):
                     ###################################
                 ]) / train_dataset_size
             influences.append(tmp_influence)
-            display_progress("Calc. influence function: ", i, train_dataset_size)
 
         return influences

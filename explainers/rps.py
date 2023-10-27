@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
+from tqdm import tqdm
 
 import numpy as np
 
@@ -37,7 +38,7 @@ class RepresenterPointSelection(BaseExplainer):
 
         Xrepresentation = []
         pred = []
-        for i, data in enumerate(train_loader):
+        for i, data in enumerate(tqdm(train_loader)):
             Xtensor, _ = data
             if self.gpu:
                 Xtensor = Xtensor.cuda()

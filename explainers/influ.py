@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 
 from torch.autograd import grad
-from utils.progress import display_progress
 
 import numpy as np
 from tqdm import tqdm

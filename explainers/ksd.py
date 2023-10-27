@@ -14,7 +14,7 @@ class KSDExplainer(BaseExplainer):
     def data_influence(self, train_loader, cache=True, **kwargs):
 
         DXY = []
-        for data in tqdm(train_loader):
+        for i, data in enumerate(tqdm(train_loader)):
             Xtensor, ytensor = data
             if self.gpu:
                 Xtensor = Xtensor.cuda()
