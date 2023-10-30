@@ -10,15 +10,21 @@ from viz import plot_explanation_images
 
 
 def main(args):
-    model = networks[args.network]()
+    model = networks[args.network](num_classes=args.n_classes)
     
-    model.load_state_dict(
-        torch.load("checkpoints/{0}-{1}-{2}.pt".format(args.network, 
-                                                    args.data, 
-                                                    args.n_classes)))
+    try:
+        model.load_state_dict(
+            torch.load("checkpoints/{0}-{1}-{2}.pt".format(args.network, 
+                                                        args.data, 
+                                                        args.n_classes)))
+    except:
+        model.load_state_dict(
+            torch.load("checkpoints/{0}-{1}-{2}.pt".format(args.network, 
+                                                        args.data, 
+                                                        args.n_classes))['net'])
     explainer = explainers[args.explainer](model, args.n_classes, gpu=args.gpu, scale=args.scale)
 
-    train_loader, test_loader, class_names = real_data[args.data](n_test_sample=10)
+    train_loader, test_loader, class_names = real_data[args.data](n_test=10, subsample=True)
 
     X_test, y_test = next(iter(test_loader))
 

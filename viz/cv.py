@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 def im_convert(tensor):
   image = tensor.cpu().clone().detach().numpy()
   image = image.transpose(1, 2, 0)
-  image = image * np.array((0.5, 0.5, 0.5)) + np.array((0.5, 0.5, 0.5))
+  image = image * np.array((0.2023, 0.1994, 0.2010)) + np.array((0.485, 0.456, 0.406))
   image = image.clip(0, 1)
   return image
 

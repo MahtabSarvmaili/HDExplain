@@ -117,15 +117,18 @@ class KSDExplainer(BaseExplainer):
         DXY_test, yonehot_test = self.inference_transfer(X_test)
         D_test = np.hstack([X_test.reshape(X_test.shape[0], -1),yonehot_test])
 
-        D = []
-        for X,y in train_loader: 
+        ksd = []
+        data_index = 0
+        for X,y in tqdm(train_loader): 
             yonehot = self.to_np(F.one_hot(y, num_classes=self.n_classes))
-            D.append(np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot]))
-        D = np.vstack(D)
+            D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
 
-        DXY = self.influence
-        ksd = self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 
-                                         1, 1, D_test.shape[1]-self.n_classes)
+            DXY = self.influence[data_index: data_index+yonehot.shape[0]]
+            ksd.append(self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 
+                                            1, 1, D_test.shape[1]-self.n_classes))
+            data_index = data_index + +yonehot.shape[0]
+
+        ksd = np.hstack(ksd)
 
         return np.argpartition(ksd, -topK, axis=1)[:, -topK:], ksd
     
