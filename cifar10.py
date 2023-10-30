@@ -27,8 +27,6 @@ def main(args):
     train_loader, test_loader, class_names = real_data[args.data](n_test=10, subsample=True)
 
     X_test, y_test = next(iter(test_loader))
-
-    import ipdb; ipdb.set_trace()
      
     explainer.data_influence(train_loader, cache=True)
 

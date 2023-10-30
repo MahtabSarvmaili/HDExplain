@@ -59,7 +59,7 @@ def ocea(n_test, random_state=42, subsample=False):
 
     trainset = torchvision.datasets.ImageFolder("data/ocea/train/", transform=transform_train)
     
-    tens = list(range(0, len(trainset), 30))
+    tens = list(range(0, len(trainset), 10))
 
     if subsample:
         trainset_1 = torch.utils.data.Subset(trainset, tens)
