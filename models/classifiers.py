@@ -25,6 +25,10 @@ class SimpleNet(nn.Module):
     def predict(self, x):
       logit = self.forward(x)
       return F.softmax(logit, dim=1)
+
+    def predict_with_representation(self, x):
+        logit = self.fc(x)
+        return F.softmax(logit, dim=1)
     
 
 class ResNet(nn.Module):
@@ -145,8 +149,12 @@ class ResNet(nn.Module):
         return x
     
     def predict(self, x):
-      logit = self.forward(x)
-      return F.softmax(logit, dim=1)
+        logit = self.forward(x)
+        return F.softmax(logit, dim=1)
+
+    def predict_with_representation(self, x):
+        logit = self.fc(x)
+        return F.softmax(logit, dim=1)
     
     def representation(self, x):
         x = self.conv1(x)

@@ -7,22 +7,7 @@ from torch.autograd import grad
 import numpy as np
 import copy
 
-from explainers import BaseExplainer
-
-
-class Sigmoid(nn.Module):
-    def __init__(self, fc):
-        super(Sigmoid, self).__init__()
-        self.fc = copy.deepcopy(fc)
-
-    def forward(self, x):
-        x = self.fc(x)
-        return x
-
-    def predict(self, x):
-      logit = self.forward(x)
-      return F.softmax(logit, dim=1)
-    
+from explainers import BaseExplainer    
 
 
 class TracIn(BaseExplainer):

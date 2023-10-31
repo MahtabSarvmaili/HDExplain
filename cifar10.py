@@ -39,9 +39,13 @@ def main(args):
 
     instances = explain_instance(train_loader.dataset, X_test_tensor, y_hat, top_explaination)
 
+    if args.scale:
+        name_template = "{0}*-{1}-{2}.pdf"
+    else:
+        name_template = "{0}-{1}-{2}.pdf"
     for i in range(len(instances)):
         plot_explanation_images(instances[i], class_names, 
-                                name="{0}-{1}-{2}.pdf".format(args.explainer, args.data, i))
+                                name=name_template.format(args.explainer, args.data, i))
         
 
 if __name__ == "__main__":

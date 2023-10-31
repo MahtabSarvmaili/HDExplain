@@ -8,8 +8,11 @@ from explainers import BaseExplainer
 
 
 class KSDExplainer(BaseExplainer):
-    def __init__(self, classifier, n_classes, gpu=False, **kwargs):
+    def __init__(self, classifier, n_classes, gpu=False, scale=False, **kwargs):
         super(KSDExplainer,self).__init__(classifier, n_classes, gpu)
+        self.last_layer = False
+        if scale:
+            self.last_layer =True
 
     def data_influence(self, train_loader, cache=True, **kwargs):
 
@@ -22,12 +25,20 @@ class KSDExplainer(BaseExplainer):
             yonehot = F.one_hot(ytensor, num_classes=self.n_classes)
             # print(yonehot)
             xbackpropable = Xtensor.clone().detach()
-            xbackpropable.requires_grad = True
-            pred = self.classifier.predict(xbackpropable)
-            pred_prob = torch.sum(pred * yonehot, dim=1)
-            log_pred_prob = torch.log(pred_prob)
-            output = torch.sum(log_pred_prob)
-            gradients = torch.autograd.grad(output, xbackpropable)[0]
+            if not self.last_layer:
+                xbackpropable.requires_grad = True
+                pred = self.classifier.predict(xbackpropable)
+                pred_prob = torch.sum(pred * yonehot, dim=1)
+                log_pred_prob = torch.log(pred_prob)
+                output = torch.sum(log_pred_prob)
+                gradients = torch.autograd.grad(output, xbackpropable)[0]
+            else:
+                representation = self.classifier.representation(xbackpropable)
+                pred = self.classifier.predict_with_representation(representation)
+                pred_prob = torch.sum(pred * yonehot, dim=1)
+                log_pred_prob = torch.log(pred_prob)
+                output = torch.sum(log_pred_prob)
+                gradients = torch.autograd.grad(output, representation)[0]
 
             DXY.append(np.hstack([self.to_np(gradients.reshape(gradients.shape[0], -1)),
                             self.to_np(pred)]))
@@ -39,12 +50,20 @@ class KSDExplainer(BaseExplainer):
         yonehot = F.one_hot(y.clone().detach(), num_classes=self.n_classes)
         # print(yonehot)
         xbackpropable = X.clone().detach()
-        xbackpropable.requires_grad = True
-        pred = self.classifier.predict(xbackpropable)
-        pred_prob = torch.sum(pred * yonehot, dim=1)
-        log_pred_prob = torch.log(pred_prob)
-        output = torch.sum(log_pred_prob)
-        gradients = torch.autograd.grad(output, xbackpropable)[0]
+        if not self.last_layer:
+            xbackpropable.requires_grad = True
+            pred = self.classifier.predict(xbackpropable)
+            pred_prob = torch.sum(pred * yonehot, dim=1)
+            log_pred_prob = torch.log(pred_prob)
+            output = torch.sum(log_pred_prob)
+            gradients = torch.autograd.grad(output, xbackpropable)[0]
+        else:
+            representation = self.classifier.representation(xbackpropable)
+            pred = self.classifier.predict_with_representation(representation)
+            pred_prob = torch.sum(pred * yonehot, dim=1)
+            log_pred_prob = torch.log(pred_prob)
+            output = torch.sum(log_pred_prob)
+            gradients = torch.autograd.grad(output, representation)[0]
 
         DXY = np.hstack([self.to_np(gradients.reshape(gradients.shape[0], -1)),
                         self.to_np(pred)])
@@ -96,13 +115,19 @@ class KSDExplainer(BaseExplainer):
 
     def data_model_discrepancy(self, X, y):
         yonehot = self.to_np(F.one_hot(torch.tensor(y), num_classes=self.n_classes))
-        D = np.hstack([X.reshape(X.shape[0], -1),yonehot])
+        if not self.last_layer:
+            D = np.hstack([X.reshape(X.shape[0], -1),yonehot])
+        else:
+            Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
+            representation = self.classifier.representation(Xtensor)
+            D = np.hstack([self.to_np(representation),yonehot])
+
         DXY = self.influence
         pyx = np.ones(X.shape[0])
         unnormalized = np.sum(self.gaussian_stein_kernel(D, D, 
                                                          DXY, DXY, 
                                                          pyx, pyx, 
-                                                         D.shape[1]-self.n_classes))
+                                                         D.shape[1]))
         return unnormalized / (X.shape[0] ** 2)
 
 
@@ -115,18 +140,32 @@ class KSDExplainer(BaseExplainer):
     
     def pred_explanation(self, train_loader, X_test, topK=5):
         DXY_test, yonehot_test = self.inference_transfer(X_test)
-        D_test = np.hstack([X_test.reshape(X_test.shape[0], -1),yonehot_test])
+
+        if not self.last_layer:
+            D_test = np.hstack([X_test.reshape(X_test.shape[0], -1),yonehot_test])
+        else:
+            Xtensor_test = torch.from_numpy(np.array(X_test, dtype=np.float32))
+            if self.gpu:
+                Xtensor_test = Xtensor_test.cuda()
+            representation = self.classifier.representation(Xtensor_test)
+            D_test = np.hstack([self.to_np(representation),yonehot_test])      
 
         ksd = []
         data_index = 0
         for X,y in tqdm(train_loader): 
             yonehot = self.to_np(F.one_hot(y, num_classes=self.n_classes))
-            D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
+            if not self.last_layer:
+                D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
+            else:
+                if self.gpu:
+                    X = X.cuda()
+                representation = self.classifier.representation(X)
+                D = np.hstack([self.to_np(representation),yonehot])   
 
             DXY = self.influence[data_index: data_index+yonehot.shape[0]]
             ksd.append(self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 
-                                            1, 1, D_test.shape[1]-self.n_classes))
-            data_index = data_index + +yonehot.shape[0]
+                                            1, 1, D_test.shape[1]))
+            data_index = data_index + yonehot.shape[0]
 
         ksd = np.hstack(ksd)
 
@@ -137,12 +176,19 @@ class KSDExplainer(BaseExplainer):
         index = 0
         for i, (X,y) in enumerate(tqdm(train_loader)):
             yonehot = self.to_np(F.one_hot(y, num_classes=self.n_classes))
-            D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
+
+            if not self.last_layer:
+                D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
+            else:
+                if self.gpu:
+                    X = X.cuda()
+                representation = self.classifier.representation(X)
+                D = np.hstack([self.to_np(representation),yonehot])   
 
             DXY = self.influence[index:index+X.shape[0]]
 
             ksd.append(self.elementwise_gaussian_stein_kernel(D, D, DXY, DXY, 
-                                                  1, 1, D.shape[1]-self.n_classes))
+                                                  1, 1, D.shape[1]))
             index += X.shape[0]
         
         ksd = np.concatenate(ksd)
