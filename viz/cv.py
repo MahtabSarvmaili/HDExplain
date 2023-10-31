@@ -17,9 +17,9 @@ def plot_explanation_images(instance, classes, name=""):
       ax = fig.add_subplot(1, n_images, idx+1, xticks=[], yticks=[])
       plt.imshow(im_convert(instance[0][idx]))
       if idx == 0:
-        ax.set_xlabel("Pred Class: {0}".format(classes[instance[1][idx]]), fontsize=18)
+        ax.set_xlabel("Predict: {0}".format(classes[instance[1][idx]]), fontsize=28)
       else:
-        ax.set_xlabel("Data Label: {0}".format(classes[instance[1][idx]]), fontsize=18)
+        ax.set_xlabel("Label: {0}".format(classes[instance[1][idx]]), fontsize=28)
     
   plt.tight_layout()
   plt.savefig("plots/{0}".format(name), format='pdf')
