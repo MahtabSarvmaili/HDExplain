@@ -33,15 +33,14 @@ def main(args):
     try:
         df = load_dataframe_csv("tables", "Explainability_{0}.csv".format(args.data))
     except:
-        columns = ['data', 'explainer', 'coverage', 'hit_rate']
+        columns = ['data', 'explainer', 'scale', 'coverage', 'hit_rate']
         df = pd.DataFrame(columns=columns)
 
-    seed = np.random.randint(100)
-    coverage, hit_rate = perturbation_explanation(explainer, dataloader, seed=seed)
+    coverage, hit_rate = perturbation_explanation(explainer, dataloader, seed=None)
     results = dict()
     results['data'] = args.data
     results['explainer'] = args.explainer
-    results['seed'] = seed
+    results['scale'] = args.scale
     results['coverage'] = coverage
     results['hit_rate'] = hit_rate
     df = df.append(results, ignore_index=True)
