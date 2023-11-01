@@ -15,7 +15,7 @@ def perturbation_explanation(explainer, dataloader, size=100, seed=1, topk=3, gp
         feature, label = dataloader.dataset[i]
         data_features.append(feature)
 
-    X = np.vstack(data_features)
+    X = np.stack(data_features)
     Xtensor = torch.from_numpy(X)
 
     G = torch.Generator()
@@ -31,6 +31,7 @@ def perturbation_explanation(explainer, dataloader, size=100, seed=1, topk=3, gp
 
     if gpu:
         Xperturbed = Xperturbed.cuda()
+
     _, influence_scores = explainer.pred_explanation(dataloader, Xperturbed, topK=3)
     influences.append(influence_scores)
 
