@@ -25,7 +25,7 @@ def perturbation_explanation(explainer, dataloader, size=100, seed=1, topk=3, gp
 
     perturbation = torch.FloatTensor(Xtensor.shape).uniform_(-var, var, generator=G)
     # perturbation = 0
-    Xperturbed = Xtensor + perturbation
+    Xperturbed = torch.clip(Xtensor + perturbation, torch.min(Xtensor), torch.max(Xtensor))
 
     Xperturbed = Xperturbed.detach()
 

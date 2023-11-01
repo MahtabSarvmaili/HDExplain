@@ -7,6 +7,8 @@ import argparse
 
 from experiments import perturbation_explanation
 
+import time
+
 from torch.utils.data import DataLoader
 from models import ClassifierTrainer, CustomDataset
 
@@ -19,7 +21,6 @@ def main(args):
         torch.load("checkpoints/{0}-{1}-{2}.pt".format(args.network, 
                                                     args.data, 
                                                     args.n_classes)))
-    explainer = explainers[args.explainer](model, args.n_classes, gpu=args.gpu, scale=args.scale)
 
     if args.synthetic:
         X,y = synthetic_data[args.data](n_samples=500, n_classes = args.n_classes)
@@ -28,12 +29,18 @@ def main(args):
     else:
         dataloader, _, _ = real_data[args.data](n_test_sample=10)
 
+    st = time.time()
+
+    explainer = explainers[args.explainer](model, args.n_classes, gpu=args.gpu, scale=args.scale)
+
     explainer.data_influence(dataloader, cache=True)
+
+    et = time.time()
 
     try:
         df = load_dataframe_csv("tables", "Explainability_{0}.csv".format(args.data))
     except:
-        columns = ['data', 'explainer', 'scale', 'coverage', 'hit_rate']
+        columns = ['data', 'explainer', 'scale', 'coverage', 'hit_rate', 'execution_time']
         df = pd.DataFrame(columns=columns)
 
     coverage, hit_rate = perturbation_explanation(explainer, dataloader, seed=None)
@@ -43,6 +50,7 @@ def main(args):
     results['scale'] = args.scale
     results['coverage'] = coverage
     results['hit_rate'] = hit_rate
+    results['execution_time'] = et - st
     df = df.append(results, ignore_index=True)
     save_dataframe_csv(df, "tables", "Explainability_{0}.csv".format(args.data))
         

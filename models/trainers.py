@@ -15,6 +15,9 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         return self.x[idx], self.y[idx]
     
+    def targets(self):
+        return self.y
+    
 class ClassifierTrainer(object):
     def __init__(self, model):
         self.criterion = nn.CrossEntropyLoss()
