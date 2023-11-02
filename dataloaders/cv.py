@@ -89,7 +89,6 @@ def ocea(n_test, random_state=42, subsample=False):
 def mri(n_test, random_state=42, subsample=False):
     transform_train = transforms.Compose([
         transforms.Resize((128,128)), 
-        transforms.RandomHorizontalFlip(p = 0.5),
         transforms.ToTensor(),
         transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
     ])
@@ -102,7 +101,7 @@ def mri(n_test, random_state=42, subsample=False):
 
     trainset = torchvision.datasets.ImageFolder("data/mri/train/", transform=transform_train)
     
-    tens = list(range(0, len(trainset), 10))
+    tens = list(range(0, len(trainset), 1))
 
     if subsample:
         trainset_1 = torch.utils.data.Subset(trainset, tens)
