@@ -84,3 +84,46 @@ def ocea(n_test, random_state=42, subsample=False):
     classes = ('CC', 'EC', 'HGSC', 'LGSC', 'MC')
     
     return trainloader, testloader, classes
+
+
+def mri(n_test, random_state=42, subsample=False):
+    transform_train = transforms.Compose([
+        transforms.Resize((128,128)), 
+        transforms.RandomHorizontalFlip(p = 0.5),
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.Resize((128,128)), 
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+    ])
+
+    trainset = torchvision.datasets.ImageFolder("data/mri/train/", transform=transform_train)
+    
+    tens = list(range(0, len(trainset), 10))
+
+    if subsample:
+        trainset_1 = torch.utils.data.Subset(trainset, tens)
+
+        trainloader = torch.utils.data.DataLoader(
+            trainset_1, batch_size=128, shuffle=False)
+    else:
+        trainloader = torch.utils.data.DataLoader(
+            trainset, batch_size=128, shuffle=False)
+    
+
+    testset = torchvision.datasets.ImageFolder("data/mri/test/", transform=transform_test)
+    
+    G = torch.Generator()
+    G.manual_seed(random_state)
+    sampler = torch.utils.data.RandomSampler(testset, replacement=False, 
+                                             generator=G)
+    
+    testloader = torch.utils.data.DataLoader(
+    testset, batch_size=n_test, sampler=sampler, generator=G)
+    
+    classes = ('Pituitary', 'Meningioma', 'Glioma', 'No Tumor')
+    
+    return trainloader, testloader, classes
