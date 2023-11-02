@@ -20,10 +20,17 @@ def main(args):
                                         n_classes=args.n_classes)
     else:
         model = networks[args.network](num_classes=args.n_classes)
-    model.load_state_dict(
-        torch.load("checkpoints/{0}-{1}-{2}.pt".format(args.network, 
-                                                    args.data, 
-                                                    args.n_classes)))
+
+    try:
+        model.load_state_dict(
+            torch.load("checkpoints/{0}-{1}-{2}.pt".format(args.network, 
+                                                        args.data, 
+                                                        args.n_classes)))
+    except:
+        model.load_state_dict(
+            torch.load("checkpoints/{0}-{1}-{2}.pt".format(args.network, 
+                                                        args.data, 
+                                                        args.n_classes))['net'])
 
     if args.synthetic:
         X,y = synthetic_data[args.data](n_samples=500, n_classes = args.n_classes)
