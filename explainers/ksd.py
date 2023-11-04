@@ -8,11 +8,17 @@ from explainers import BaseExplainer
 
 
 class KSDExplainer(BaseExplainer):
-    def __init__(self, classifier, n_classes, gpu=False, scale=False, **kwargs):
+    def __init__(self, classifier, n_classes, gpu=False, scale=False, kernel="RBF", **kwargs):
         super(KSDExplainer,self).__init__(classifier, n_classes, gpu)
         self.last_layer = False
         if scale:
             self.last_layer =True
+        if kernel == "RBF":
+            self.kernel = self.gaussian_stein_kernel
+        elif kernel == "IMQ":
+            self.kernel = self.imq_stein_kernel
+        else:
+            self.kernel = self.liner_stein_kernel
 
     def data_influence(self, train_loader, cache=True, **kwargs):
 
@@ -73,7 +79,7 @@ class KSDExplainer(BaseExplainer):
     @staticmethod
     def gaussian_stein_kernel(
         x, y, scores_x, scores_y, pred_prob_x, pred_prob_y, 
-        sigma, return_kernel=False
+        sigma, return_kernel=False, **kwargs
     ):
         _, p = x.shape
         d = x[:, None, :] - y[None, :, :]
@@ -90,6 +96,47 @@ class KSDExplainer(BaseExplainer):
         if return_kernel:
             return weighted_stein_kernel, k
         return weighted_stein_kernel
+    
+    @staticmethod
+    def liner_stein_kernel(
+        x, y, scores_x, scores_y, pred_prob_x, pred_prob_y, 
+        return_kernel=False, **kwargs):
+
+        n, d = x.shape
+        kernel = np.matmul(x, y.T)
+        stein_kernel = (
+            np.matmul(scores_x, scores_y.T) * kernel + np.matmul(scores_x, x.T) + np.matmul(scores_y, y.T) + d
+        )
+
+        weights = np.outer(pred_prob_x, pred_prob_y)
+        weighted_stein_kernel = stein_kernel * weights
+
+        if return_kernel:
+            return weighted_stein_kernel, kernel
+        return weighted_stein_kernel
+    
+    @staticmethod
+    def imq_stein_kernel(x, y, scores_x, scores_y, pred_prob_x, pred_prob_y, 
+                         g=1, beta=0.5, return_kernel=False, **kwargs):
+        _, p = x.shape
+        d = x[:, None, :] - y[None, :, :]
+        dists = (d ** 2).sum(axis=-1)
+        res = 1 + g * dists
+        kxy = res ** (-beta)
+        scores_d = scores_x[:, None, :] - scores_y[None, :, :]
+        temp = d * scores_d
+        dkxy = 2 * beta * g * (res) ** (-beta - 1) * temp.sum(axis=-1)
+        d2kxy = 2 * (
+            beta * g * (res) ** (-beta - 1) * p
+            - 2 * beta * (beta + 1) * g ** 2 * dists * res ** (-beta - 2)
+        )
+        k_pi = scores_x.mm(scores_y.T) * kxy + dkxy + d2kxy
+        weights = np.outer(pred_prob_x, pred_prob_y)
+        weighted_stein_kernel = k_pi * weights
+
+        if return_kernel:
+            return k_pi, kxy
+        return k_pi
     
     @staticmethod
     def elementwise_gaussian_stein_kernel(
@@ -124,10 +171,10 @@ class KSDExplainer(BaseExplainer):
 
         DXY = self.influence
         pyx = np.ones(X.shape[0])
-        unnormalized = np.sum(self.gaussian_stein_kernel(D, D, 
-                                                         DXY, DXY, 
-                                                         pyx, pyx, 
-                                                         D.shape[1]))
+        unnormalized = np.sum(self.kernel(D, D, 
+                                          DXY, DXY, 
+                                          pyx, pyx, 
+                                          sigma = D.shape[1]))
         return unnormalized / (X.shape[0] ** 2)
 
 
@@ -163,8 +210,8 @@ class KSDExplainer(BaseExplainer):
                 D = np.hstack([self.to_np(representation),yonehot])   
 
             DXY = self.influence[data_index: data_index+yonehot.shape[0]]
-            ksd.append(self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 
-                                            1, 1, D_test.shape[1]))
+            ksd.append(self.kernel(D_test, D, DXY_test, DXY, 
+                                   1, 1, sigma = D_test.shape[1]))
             data_index = data_index + yonehot.shape[0]
 
         ksd = np.hstack(ksd)
@@ -197,8 +244,8 @@ class KSDExplainer(BaseExplainer):
                 D = np.hstack([self.to_np(representation),yonehot])   
 
             DXY = self.influence[data_index: data_index+yonehot.shape[0]]
-            ksd.append(self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 
-                                            1, 1, D_test.shape[1]))
+            ksd.append(self.kernel(D_test, D, DXY_test, DXY, 
+                                   1, 1, sigma = D_test.shape[1]))
             
             partial_ksd = []
             for i, box in enumerate(boxes):
@@ -207,11 +254,11 @@ class KSDExplainer(BaseExplainer):
 
                 cropped_D_test_inst = self.crop(D_test_ins, X_test.shape, box)
 
-                partial_ksd.append(self.gaussian_stein_kernel(cropped_D_test_inst, 
-                                                            self.crop(D, X_test.shape, box), 
-                                                            self.crop(DXY_test_ins, X.shape, box), 
-                                                            self.crop(DXY, X.shape, box), 
-                                                1, 1, cropped_D_test_inst.shape[1]))
+                partial_ksd.append(self.kernel(cropped_D_test_inst, 
+                                               self.crop(D, X_test.shape, box), 
+                                               self.crop(DXY_test_ins, X.shape, box), 
+                                               self.crop(DXY, X.shape, box), 
+                                               1, 1, sigma = cropped_D_test_inst.shape[1]))
             ksd_cropped.append(np.vstack(partial_ksd))
             data_index = data_index + yonehot.shape[0]
 
