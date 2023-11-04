@@ -170,6 +170,64 @@ class KSDExplainer(BaseExplainer):
         ksd = np.hstack(ksd)
 
         return np.argpartition(ksd, -topK, axis=1)[:, -topK:], ksd
+
+    def pred_explanation_with_cropping(self, train_loader, X_test, boxes, topK=5):
+        DXY_test, yonehot_test = self.inference_transfer(X_test)
+
+        if not self.last_layer:
+            D_test = np.hstack([X_test.reshape(X_test.shape[0], -1),yonehot_test])
+        else:
+            Xtensor_test = torch.from_numpy(np.array(X_test, dtype=np.float32))
+            if self.gpu:
+                Xtensor_test = Xtensor_test.cuda()
+            representation = self.classifier.representation(Xtensor_test)
+            D_test = np.hstack([self.to_np(representation),yonehot_test])      
+
+        ksd = []
+        ksd_cropped = []
+        data_index = 0
+        for X,y in tqdm(train_loader): 
+            yonehot = self.to_np(F.one_hot(y, num_classes=self.n_classes))
+            if not self.last_layer:
+                D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
+            else:
+                if self.gpu:
+                    X = X.cuda()
+                representation = self.classifier.representation(X)
+                D = np.hstack([self.to_np(representation),yonehot])   
+
+            DXY = self.influence[data_index: data_index+yonehot.shape[0]]
+            ksd.append(self.gaussian_stein_kernel(D_test, D, DXY_test, DXY, 
+                                            1, 1, D_test.shape[1]))
+            
+            partial_ksd = []
+            for i, box in enumerate(boxes):
+                D_test_ins = D_test[i:i+1]
+                DXY_test_ins = DXY_test[i:i+1]
+
+                cropped_D_test_inst = self.crop(D_test_ins, X_test.shape, box)
+
+                partial_ksd.append(self.gaussian_stein_kernel(cropped_D_test_inst, 
+                                                            self.crop(D, X_test.shape, box), 
+                                                            self.crop(DXY_test_ins, X.shape, box), 
+                                                            self.crop(DXY, X.shape, box), 
+                                                1, 1, cropped_D_test_inst.shape[1]))
+            ksd_cropped.append(np.vstack(partial_ksd))
+            data_index = data_index + yonehot.shape[0]
+
+        ksd = np.hstack(ksd)
+        ksd_cropped = np.hstack(ksd_cropped)
+
+        ksd = ksd + ksd_cropped
+
+        return np.argpartition(ksd, -topK, axis=1)[:, -topK:], ksd
+
+    def crop(self, array, input_shape, box):
+        feature_dim = np.prod(input_shape[1:])
+        X = array[:,:feature_dim].reshape((array.shape[0],)+input_shape[1:])
+        y = array[:,feature_dim:]
+        cropped_X = X[:, :, box[0]:box[1], box[2]:box[3]]
+        return np.hstack([cropped_X.reshape(array.shape[0], -1), y])
     
     def data_debugging(self, train_loader):
         ksd = []
