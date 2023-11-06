@@ -18,14 +18,17 @@ def perturbation_explanation(explainer, dataloader, size=100, seed=1, topk=3, gp
     X = np.stack(data_features)
     Xtensor = torch.from_numpy(X)
 
+    Xtensor = torch.flip(Xtensor, (3,))
+
     G = torch.Generator()
     G.manual_seed(seed)
 
-    var = torch.var(Xtensor) * 0.01
+    # var = torch.var(Xtensor) * 0.01
 
-    perturbation = torch.FloatTensor(Xtensor.shape).uniform_(-var, var, generator=G)
-    # perturbation = 0
-    Xperturbed = torch.clip(Xtensor + perturbation, torch.min(Xtensor), torch.max(Xtensor))
+    # perturbation = torch.FloatTensor(Xtensor.shape).uniform_(-var, var, generator=G)
+    # # perturbation = 0
+    # Xperturbed = torch.clip(Xtensor + perturbation, torch.min(Xtensor), torch.max(Xtensor))
+    Xperturbed = Xtensor
 
     Xperturbed = Xperturbed.detach()
 
