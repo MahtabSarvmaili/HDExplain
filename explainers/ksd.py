@@ -8,7 +8,7 @@ from explainers import BaseExplainer
 
 
 class KSDExplainer(BaseExplainer):
-    def __init__(self, classifier, n_classes, gpu=False, scale=False, kernel="RBF", **kwargs):
+    def __init__(self, classifier, n_classes, gpu=False, scale=False, kernel="RBF", temperature= 1.0, **kwargs):
         super(KSDExplainer,self).__init__(classifier, n_classes, gpu)
         self.last_layer = False
         if scale:
@@ -19,6 +19,7 @@ class KSDExplainer(BaseExplainer):
             self.kernel = self.imq_stein_kernel
         else:
             self.kernel = self.liner_stein_kernel
+        self.temperature = temperature
 
     def data_influence(self, train_loader, cache=True, **kwargs):
 
@@ -105,7 +106,7 @@ class KSDExplainer(BaseExplainer):
         n, d = x.shape
         kernel = np.matmul(x, y.T)
         stein_kernel = (
-            np.matmul(scores_x, scores_y.T) * kernel + np.matmul(scores_x, x.T) + np.matmul(scores_y, y.T) + d
+            np.matmul(scores_x, scores_y.T) * kernel + np.matmul(scores_x, y.T) + np.matmul(scores_y, x.T).T + d
         )
 
         weights = np.outer(pred_prob_x, pred_prob_y)
@@ -130,13 +131,13 @@ class KSDExplainer(BaseExplainer):
             beta * g * (res) ** (-beta - 1) * p
             - 2 * beta * (beta + 1) * g ** 2 * dists * res ** (-beta - 2)
         )
-        k_pi = scores_x.mm(scores_y.T) * kxy + dkxy + d2kxy
+        k_pi = np.matmul(scores_x,scores_y.T) * kxy + dkxy + d2kxy
         weights = np.outer(pred_prob_x, pred_prob_y)
         weighted_stein_kernel = k_pi * weights
 
         if return_kernel:
-            return k_pi, kxy
-        return k_pi
+            return weighted_stein_kernel, kxy
+        return weighted_stein_kernel
     
     @staticmethod
     def elementwise_gaussian_stein_kernel(
@@ -174,7 +175,7 @@ class KSDExplainer(BaseExplainer):
         unnormalized = np.sum(self.kernel(D, D, 
                                           DXY, DXY, 
                                           pyx, pyx, 
-                                          sigma = D.shape[1]))
+                                          sigma = self.temperature * D.shape[1]))
         return unnormalized / (X.shape[0] ** 2)
 
 
@@ -211,7 +212,7 @@ class KSDExplainer(BaseExplainer):
 
             DXY = self.influence[data_index: data_index+yonehot.shape[0]]
             ksd.append(self.kernel(D_test, D, DXY_test, DXY, 
-                                   1, 1, sigma = D_test.shape[1]))
+                                   1, 1, sigma = self.temperature * D_test.shape[1]))
             data_index = data_index + yonehot.shape[0]
 
         ksd = np.hstack(ksd)
@@ -245,7 +246,7 @@ class KSDExplainer(BaseExplainer):
 
             DXY = self.influence[data_index: data_index+yonehot.shape[0]]
             ksd.append(self.kernel(D_test, D, DXY_test, DXY, 
-                                   1, 1, sigma = D_test.shape[1]))
+                                   1, 1, sigma = self.temperature * D_test.shape[1]))
             
             partial_ksd = []
             for i, box in enumerate(boxes):
@@ -258,7 +259,7 @@ class KSDExplainer(BaseExplainer):
                                                self.crop(D, X_test.shape, box), 
                                                self.crop(DXY_test_ins, X.shape, box), 
                                                self.crop(DXY, X.shape, box), 
-                                               1, 1, sigma = cropped_D_test_inst.shape[1]))
+                                               1, 1, sigma = self.temperature * cropped_D_test_inst.shape[1]))
             ksd_cropped.append(np.vstack(partial_ksd))
             data_index = data_index + yonehot.shape[0]
 
@@ -293,7 +294,7 @@ class KSDExplainer(BaseExplainer):
             DXY = self.influence[index:index+X.shape[0]]
 
             ksd.append(self.elementwise_gaussian_stein_kernel(D, D, DXY, DXY, 
-                                                  1, 1, D.shape[1]))
+                                                  1, 1, self.temperature * D.shape[1]))
             index += X.shape[0]
         
         ksd = np.concatenate(ksd)
