@@ -43,8 +43,12 @@ def main(args):
         groundtruth = np.zeros_like(scores)
         groundtruth[corrupt_index] = 1
 
+        hard_decision = np.zeros_like(y)
+
+        hard_decision[order[-np.rint(len(y)/10).astype(int):]] = 1
+
         if args.visualize:
-            data_debug_2d(X, y, (scores, groundtruth), 
+            data_debug_2d(X, y, (hard_decision, groundtruth), 
                           name="debug-{0}-{1}.pdf".format(args.explainer, args.data),
                               )
 
