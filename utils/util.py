@@ -1,3 +1,4 @@
+from sklearn.manifold import TSNE
 
 
 def explain_instance(train_dataset, test_tensor, test_pred, top_influencers):
@@ -15,4 +16,12 @@ def explain_instance(train_dataset, test_tensor, test_pred, top_influencers):
         instances.append([feature_group, label_group])
 
     return instances
-        
+
+
+def tsne(features, n_components = 2, verbose = 1, perplexity = 30, n_iter = 1000, metric = 'cosine'):
+    tsne_results = TSNE(n_components=n_components,
+                        verbose=verbose,
+                        perplexity=perplexity,
+                        n_iter=n_iter,
+                        metric=metric).fit_transform(features)
+    return tsne_results

@@ -54,7 +54,7 @@ class InfluenceFunction(BaseExplainer):
 
         scores = np.array([self.calc_self_influence_function(s_test_vec[i], i) for i in range(len(s_test_vec))])
 
-        return -scores, np.argsort(scores)[::-1]
+        return scores, np.argsort(scores)
 
 
     def grad_z(self, z, t):

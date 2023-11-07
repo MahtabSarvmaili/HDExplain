@@ -276,8 +276,7 @@ class KSDExplainer(BaseExplainer):
         y = array[:,feature_dim:]
         cropped_X = X[:, :, box[0]:box[1], box[2]:box[3]]
         return np.hstack([cropped_X.reshape(array.shape[0], -1), y])
-
-    # Option 1    
+  
     def data_debugging(self, train_loader):
         ksd = []
         index = 0
@@ -300,51 +299,7 @@ class KSDExplainer(BaseExplainer):
         
         ksd = np.concatenate(ksd)
         
-        return ksd, np.argsort(ksd)
-
-    # def data_debugging(self, train_loader):
-    #     ksd = []
-    #     query_index = 0
-    #     for i, (X_query,y_query) in enumerate(tqdm(train_loader)):
-    #         ksd_query = []
-    #         yonehot_query = self.to_np(F.one_hot(y_query, num_classes=self.n_classes))
-
-    #         if not self.last_layer:
-    #             D_query = np.hstack([self.to_np(X_query.reshape(X_query.shape[0], -1)),yonehot_query])
-    #         else:
-    #             if self.gpu:
-    #                 X_query = X_query.cuda()
-    #             representation = self.classifier.representation(X_query)
-    #             D_query = np.hstack([self.to_np(representation),yonehot_query])   
-
-    #         DXY_query = self.influence[query_index:query_index+X_query.shape[0]]
-
-    #         data_index = 0
-    #         for j, (X,y) in enumerate(train_loader): 
-    #             yonehot = self.to_np(F.one_hot(y, num_classes=self.n_classes))
-    #             if not self.last_layer:
-    #                 D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
-    #             else:
-    #                 if self.gpu:
-    #                     X = X.cuda()
-    #                 representation = self.classifier.representation(X)
-    #                 D = np.hstack([self.to_np(representation),yonehot])   
-
-    #             DXY = self.influence[data_index: data_index+yonehot.shape[0]]
-
-    #             ksd_query.append(self.kernel(D_query, D, DXY_query, DXY, 
-    #                                 1, 1, sigma = self.temperature * D_query.shape[1]))
-                
-    #             data_index = data_index + yonehot.shape[0]
-
-    #         ksd_query = np.hstack(ksd_query)
-    #         ksd.append(ksd_query)
-    #     ksd = np.vstack(ksd)
-
-    #     np.fill_diagonal(ksd, 0.0)
-    #     scores = np.max(ksd, axis=1)
-    #     return scores, np.argsort(scores)
-
+        return ksd, np.argsort(ksd)[::-1]
 
 
 

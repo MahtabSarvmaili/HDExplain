@@ -1,5 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from matplotlib.cbook import get_sample_data
+from PIL import Image
 
 
 def im_convert(tensor):
@@ -23,3 +26,27 @@ def plot_explanation_images(instance, classes, name=""):
     
   plt.tight_layout()
   plt.savefig("plots/{0}".format(name), format='pdf')
+
+
+
+def plot_images_in_2d(x, y, tensors, axis=None, zoom=1):
+    if axis is None:
+        axis = plt.gca()
+    x, y = np.atleast_1d(x, y)
+    for x0, y0, tensor in zip(x, y, tensors):
+        image = Image.fromarray(im_convert(tensor))
+        image.thumbnail((100, 100), Image.ANTIALIAS)
+        img = OffsetImage(image, zoom=zoom)
+        anno_box = AnnotationBbox(img, (x0, y0),
+                                  xycoords='data',
+                                  frameon=False)
+        axis.add_artist(anno_box)
+    axis.update_datalim(np.column_stack([x, y]))
+    axis.autoscale()
+
+
+def show_tsne(x, y, tensors):
+    fig, axis = plt.subplots()
+    fig.set_size_inches(22, 22, forward=True)
+    plot_images_in_2d(x, y, tensors, zoom=0.3, axis=axis)
+    plt.show()

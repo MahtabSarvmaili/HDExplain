@@ -83,7 +83,7 @@ class RepresenterPointSelection(BaseExplainer):
         y = self.to_np(torch.concatenate(y))
         alpha, _ = self.influence
         alpha_j = alpha[range(alpha.shape[0]), y]        
-        return -alpha_j, np.argsort(alpha_j)[::-1]
+        return alpha_j, np.argsort(alpha_j)
 
 
     def retrain(self, x, y, model, lmbd, epoch):

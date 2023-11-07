@@ -7,16 +7,13 @@ from torch.utils.data import DataLoader, Dataset
 class CustomDataset(Dataset):
     def __init__(self, x, y):
         self.x = x
-        self.y = y
+        self.targets = y
 
     def __len__(self):
         return len(self.x)
 
     def __getitem__(self, idx):
-        return self.x[idx], self.y[idx]
-    
-    def targets(self):
-        return self.y
+        return self.x[idx], self.targets[idx]
     
 class ClassifierTrainer(object):
     def __init__(self, model):
