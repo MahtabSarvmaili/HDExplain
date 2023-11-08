@@ -81,7 +81,7 @@ class InfluenceFunction(BaseExplainer):
         return loss
     
     def calc_s_test(self,  X_test, y_test, train_loader,
-                damp=0.01, scale=25, recursion_depth=100, r=1):
+                damp=0.01, scale=25, recursion_depth=10, r=1):
 
         s_tests = []
         for i in tqdm(range(X_test.shape[0])):
