@@ -1,25 +1,44 @@
 import numpy as np
 import torch
 
-def data_debugging(explainer, dataloader, n_classes, n_corrputed, ks, seed=1, gpu=False):
+def data_debugging(explainer, dataloader, n_classes, n_corrputed, ks, seed=1, gpu=False, subsample=False):
 
-    data_size = len(dataloader.dataset)
+    dataset = dataloader.dataset
+
+    np.random.seed(seed)
+    tens = np.random.choice(len(dataset), round(len(dataset)/10), replace=False).tolist()
+
+    data_size = len(tens)
+
     np.random.seed(seed)
     corrupt_index = np.random.choice(data_size, n_corrputed, replace=False)
-    corrupted_labels = dataloader.dataset.targets[corrupt_index] + 1
+    backtrack_corrupted_index = np.array(tens)[corrupt_index]
+    targets = np.array(dataset.targets)
+    corrupted_labels = targets[backtrack_corrupted_index] + 1
     corrupted_labels[corrupted_labels>=n_classes] = 0
-    dataloader.dataset.targets[corrupt_index] = corrupted_labels
 
-    explainer.data_influence(dataloader, cache=True)
+    targets[backtrack_corrupted_index] = corrupted_labels
+    dataset.targets = targets.tolist()
+
+    if subsample:
+        dataset_1 = torch.utils.data.Subset(dataset, tens)
+
+        newloader = torch.utils.data.DataLoader(
+            dataset_1, batch_size=128, shuffle=False)
+    else:
+        newloader = torch.utils.data.DataLoader(
+            dataset, batch_size=128, shuffle=False)
+        corrupt_index = backtrack_corrupted_index
+
+    explainer.data_influence(newloader, cache=True)
     
-    scores, order = explainer.data_debugging(dataloader)
+    scores, order = explainer.data_debugging(newloader)
 
     recall = []
     precision = []
     ndcg = []
     for k in ks:
         hits = hit(corrupt_index, order[:k])
-        import ipdb; ipdb.set_trace()
         recall.append(recallk(corrupt_index, hits))
         precision.append(precisionk(order[:k], hits))
         ndcg.append(ndcgk(corrupt_index, order[:k], hits))

@@ -35,7 +35,7 @@ def main(args):
         dataset = CustomDataset(np.array(X, dtype=np.float32), np.array(y, dtype=np.int_))
         dataloader = DataLoader(dataset, batch_size=100, shuffle=False)
     else:
-        dataloader, _, _ = real_data[args.data](n_test=10, subsample=True)
+        dataloader, _, _ = real_data[args.data](n_test=10, subsample=False)
 
     if args.synthetic:
         
@@ -45,14 +45,14 @@ def main(args):
                     save=False,
                     epochs=200)
 
-    explainer = explainers[args.explainer](model, args.n_classes)
+    explainer = explainers[args.explainer](model, args.n_classes, gpu=args.gpu, scale=args.scale)
 
     ks = list(range(10, 110, 10))
 
     recall, precision, ndcg = data_debugging(explainer, dataloader, 
-                                                args.n_classes, n_corrputed=10, 
+                                                args.n_classes, n_corrputed=100, 
                                                 ks=ks, 
-                                                seed=args.seed, gpu=args.gpu)
+                                                seed=args.seed, gpu=args.gpu, subsample=args.subsample)
     
     try:
         df = load_dataframe_csv("tables", "Debug_{0}.csv".format(args.data))
@@ -103,5 +103,6 @@ if __name__ == "__main__":
     parser.add_argument('--visualize', dest='visualize', action='store_true')
     parser.add_argument('--gpu', dest='gpu', action='store_true')
     parser.add_argument('--scale', dest='scale', action='store_true')
+    parser.add_argument('--subsample', dest='subsample', action='store_true')
     args = parser.parse_args()
     main(args)
