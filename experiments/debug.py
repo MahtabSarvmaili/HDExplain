@@ -11,7 +11,7 @@ def data_debugging(explainer, dataloader, n_classes, n_corrputed, ks, seed=1, gp
     data_size = len(tens)
 
     np.random.seed(seed)
-    corrupt_index = np.random.choice(data_size, n_corrputed, replace=False)
+    corrupt_index = np.random.choice(data_size, min(n_corrputed, data_size), replace=False)
     backtrack_corrupted_index = np.array(tens)[corrupt_index]
     targets = np.array(dataset.targets)
     corrupted_labels = targets[backtrack_corrupted_index] + 1
