@@ -97,7 +97,30 @@ class KSDExplainer(BaseExplainer):
         if return_kernel:
             return weighted_stein_kernel, k
         return weighted_stein_kernel
-    
+
+    @staticmethod
+    def ksd_debug_kernel(
+            x: np.ndarray, y: np.ndarray,
+            scores_x: np.ndarray, scores_y: np.ndarray,
+            pred_prob_x: np.ndarray, pred_prob_y: np.ndarray,
+            sigma: float = 1.
+    ):
+        _, p = x.shape
+        d = x[:, None, :] - y[None, :, :]
+        dists = (d ** 2).sum(axis=-1)
+
+        k = np.exp(-dists / sigma / 2)
+        scalars = np.matmul(scores_x, scores_y.T)
+        scores_diff = scores_x[:, None, :] - scores_y[None, :, :]
+        diffs = (d * scores_diff).sum(axis=-1)
+
+        der2 = p - dists / sigma
+        stein_kernel = k * (scalars + diffs / sigma + der2 / sigma)
+        weights = np.outer(pred_prob_x, pred_prob_y)
+        weighted_stein_kernel = stein_kernel * weights
+        scores_diff = scores_diff.sum(axis=-1)
+        return k, scalars, scores_diff, diffs, weighted_stein_kernel
+
     @staticmethod
     def liner_stein_kernel(
         x, y, scores_x, scores_y, pred_prob_x, pred_prob_y, 
@@ -196,11 +219,11 @@ class KSDExplainer(BaseExplainer):
             if self.gpu:
                 Xtensor_test = Xtensor_test.cuda()
             representation = self.classifier.representation(Xtensor_test)
-            D_test = np.hstack([self.to_np(representation),yonehot_test])      
+            D_test = np.hstack([self.to_np(representation),yonehot_test])
 
         ksd = []
         data_index = 0
-        for X,y in tqdm(train_loader): 
+        for X,y in tqdm(train_loader):
             yonehot = self.to_np(F.one_hot(y, num_classes=self.n_classes))
             if not self.last_layer:
                 D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
@@ -208,16 +231,95 @@ class KSDExplainer(BaseExplainer):
                 if self.gpu:
                     X = X.cuda()
                 representation = self.classifier.representation(X)
-                D = np.hstack([self.to_np(representation),yonehot])   
+                D = np.hstack([self.to_np(representation),yonehot])
 
             DXY = self.influence[data_index: data_index+yonehot.shape[0]]
-            ksd.append(self.kernel(D_test, D, DXY_test, DXY, 
+            ksd.append(self.kernel(D_test, D, DXY_test, DXY,
                                    1, 1, sigma = self.temperature * D_test.shape[1]))
             data_index = data_index + yonehot.shape[0]
 
         ksd = np.hstack(ksd)
 
         return np.argpartition(ksd, -topK, axis=1)[:, -topK:], ksd
+
+    def ksd_debug(self, train_loader, X_test, y_test):
+
+        Xtensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
+        ytensor = torch.tensor(y_test)
+        if self.gpu:
+            Xtensor = Xtensor.cuda()
+        yonehot_test = F.one_hot(ytensor, num_classes=self.n_classes)
+        DXY_test, _ = self._data_influence(Xtensor, ytensor)
+        if not self.last_layer:
+            D_test = np.hstack([X_test.reshape(X_test.shape[0], -1), yonehot_test])
+        else:
+            Xtensor_test = torch.from_numpy(np.array(X_test, dtype=np.float32))
+            if self.gpu:
+                Xtensor_test = Xtensor_test.cuda()
+            representation = self.classifier.representation(Xtensor_test)
+            D_test = np.hstack([self.to_np(representation),yonehot_test])
+
+        ksd = []
+        data_index = 0
+        for X,y in tqdm(train_loader):
+            yonehot = self.to_np(F.one_hot(y, num_classes=self.n_classes))
+            if not self.last_layer:
+                D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
+            else:
+                if self.gpu:
+                    X = X.cuda()
+                representation = self.classifier.representation(X)
+                D = np.hstack([self.to_np(representation),yonehot])
+
+            DXY = self.influence[data_index: data_index+yonehot.shape[0]]
+            ksd.append(self.kernel(D_test, D, DXY_test, DXY,
+                                   1, 1, sigma = self.temperature * D_test.shape[1]))
+            data_index = data_index + yonehot.shape[0]
+
+        ksd = np.hstack(ksd)
+
+        return ksd
+
+    def datapoint_model_discrepancy(self, train_loader, X_test, y_test, dt_i, dt_ids):
+        ksd = np.zeros((1, len(dt_ids)))
+        rbf_k = np.zeros((1, len(dt_ids)))
+        scalars = np.zeros((1, len(dt_ids)))
+        scores_diff = np.zeros((1, len(dt_ids)))
+        diffs = np.zeros((1, len(dt_ids)))
+
+        Xtensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
+        ytensor = torch.tensor(y_test)
+        if self.gpu:
+            Xtensor = Xtensor.cuda()
+        yonehot_test = F.one_hot(ytensor, num_classes=self.n_classes)
+
+        D = np.hstack([X_test.reshape(X_test.shape[0], -1), yonehot_test])
+        DXY = self.influence[dt_i, :].reshape(1, -1)
+        pxy = np.ones(D.shape[0])
+
+        index_ = 0
+        for j in dt_ids:
+            x_, y_ = train_loader.dataset.__getitem__(j)
+            x_ = x_.unsqueeze(dim=0).cpu()
+            y_ = np.array(y_).reshape(1)
+            y_ = torch.tensor(y_)
+
+            y_onehot_ = self.to_np(F.one_hot(y_, num_classes=self.n_classes))
+
+            D_ = np.hstack([self.to_np(x_.reshape(x_.shape[0], -1)), y_onehot_])
+            DXY_ = self.influence[j, :].reshape(1, -1)
+            pxy_ = np.ones(D_.shape[0])
+            rbf_k[:, index_], scalars[:, index_], scores_diff[:, index_], diffs[:index_], ksd[:, index_] = self.ksd_debug_kernel(
+                D, D_, DXY, DXY_, pxy, pxy_, D_.shape[1] - self.n_classes)
+
+            index_ += x_.shape[0]
+        res = {
+            "rbf_kernel": rbf_k.reshape(-1),
+            "scalars": scalars.reshape(-1),
+            "scores_diff": np.abs(scores_diff.reshape(-1)),
+            "ksd": ksd.reshape(-1)
+        }
+        return res
 
     def pred_explanation_with_cropping(self, train_loader, X_test, boxes, topK=5):
         DXY_test, yonehot_test = self.inference_transfer(X_test)
@@ -229,12 +331,12 @@ class KSDExplainer(BaseExplainer):
             if self.gpu:
                 Xtensor_test = Xtensor_test.cuda()
             representation = self.classifier.representation(Xtensor_test)
-            D_test = np.hstack([self.to_np(representation),yonehot_test])      
+            D_test = np.hstack([self.to_np(representation),yonehot_test])
 
         ksd = []
         ksd_cropped = []
         data_index = 0
-        for X,y in tqdm(train_loader): 
+        for X,y in tqdm(train_loader):
             yonehot = self.to_np(F.one_hot(y, num_classes=self.n_classes))
             if not self.last_layer:
                 D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
@@ -242,12 +344,12 @@ class KSDExplainer(BaseExplainer):
                 if self.gpu:
                     X = X.cuda()
                 representation = self.classifier.representation(X)
-                D = np.hstack([self.to_np(representation),yonehot])   
+                D = np.hstack([self.to_np(representation),yonehot])
 
             DXY = self.influence[data_index: data_index+yonehot.shape[0]]
-            ksd.append(self.kernel(D_test, D, DXY_test, DXY, 
+            ksd.append(self.kernel(D_test, D, DXY_test, DXY,
                                    1, 1, sigma = self.temperature * D_test.shape[1]))
-            
+
             partial_ksd = []
             for i, box in enumerate(boxes):
                 D_test_ins = D_test[i:i+1]
