@@ -12,6 +12,7 @@ def im_convert(tensor):
   image = image.clip(0, 1)
   return image
 
+
 def plot_explanation_images(instance, classes, name=""):
   n_images = len(instance[0])
   fig = plt.figure(figsize=(4 * n_images, 4))
@@ -20,13 +21,13 @@ def plot_explanation_images(instance, classes, name=""):
       ax = fig.add_subplot(1, n_images, idx+1, xticks=[], yticks=[])
       plt.imshow(im_convert(instance[0][idx]))
       if idx == 0:
-        ax.set_xlabel("Predict: {0}".format(classes[instance[1][idx]]), fontsize=28)
+        ax.set_xlabel("Predict: {0}".format(classes[instance[1][idx]]), fontsize=32)
       else:
-        ax.set_xlabel("Label: {0}".format(classes[instance[1][idx]]), fontsize=28)
-    
-  plt.tight_layout()
-  plt.savefig("plots/{0}".format(name), format='pdf')
+        ax.set_xlabel("Label: {0}".format(classes[instance[1][idx]]), fontsize=32)
 
+  plt.tight_layout()
+  plt.savefig("plots/{0}".format(name), format='pdf', bbox_inches='tight')
+  plt.close()
 
 
 def plot_images_in_2d(x, y, tensors, axis=None, zoom=1):

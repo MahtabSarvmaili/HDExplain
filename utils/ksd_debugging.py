@@ -12,34 +12,36 @@ def im_convert(tensor):
     return image
 
 
-def process_kernel_debugging(
-        train_loader, dt_i, dt_ids, stein_debug, threshold, class_names, name):
+def process_kernel_debugging(train_loader, model, dt_i, dt_ids, stein_debug, ksd_threshold=0.65, threshold=0.6,
+                             class_names=None, name="", device="cuda"):
 
     df = pd.DataFrame.from_dict(stein_debug)
     df.sort_values(by="ksd", ascending=False, inplace=True)
     df.set_index(dt_ids[df.index], inplace=True)
-    dissim = df['scalars'] < threshold
-    sim = df['scalars'] >= threshold
-    df_idx = df.index.to_numpy()
-
-    least_dissim = df_idx[dissim][0]
-    most_dissim = df_idx[dissim][-1]
-    least_sim = df_idx[sim][-2]
-    most_sim = df_idx[sim][0]
-    points_to_plot = [dt_i, most_sim, least_sim, least_dissim, most_dissim]
-
-    titles = ['Original', 'Most similar', 'Least similar', 'Least dissimilar', 'Most dissimilar']
-
+    df = df.drop(df.index[0])
+    dissim = df['scalars'][df["ksd"] > ksd_threshold] < threshold
+    df_ = df[df["ksd"] > ksd_threshold][dissim]
+    df_.sort_values(by="ksd", ascending=False, inplace=True)
+    df_idx = df_.index.to_numpy()
+    points_to_plot = list(df_idx[:4])
+    points_to_plot.insert(0, dt_i)
     instances = []
     feature_group = []
     label_group = []
+    pred_group = []
 
     for j in points_to_plot:
+
         train_point = train_loader.dataset[j]
         feature_group.append(train_point[0])
         label_group.append(train_point[1])
+        img = train_point[0].unsqueeze(0)
+        pred_group.append(model.predict(img).argmax(dim=1).item())
+
     instances.append(feature_group)
     instances.append(label_group)
+    instances.append(pred_group)
+
 
     n_images = len(instances[0])
     fig = plt.figure(figsize=(4 * n_images, 4))
@@ -47,6 +49,55 @@ def process_kernel_debugging(
     for id in np.arange(n_images):
         ax = fig.add_subplot(1, n_images, id + 1, xticks=[], yticks=[])
         plt.imshow(im_convert(instances[0][id]))
-        ax.set_xlabel("{0} \n Label: {1}".format(titles[id], class_names[instances[1][id]]), fontsize=28)
+        if id == 0:
+            ax.set_ylabel("Original", fontsize=30)
+        # ax.set_xlabel("Label: {0} \n Pred: {1}".format(class_names[instances[1][id]], class_names[instances[2][id]]), fontsize=28)
+        ax.set_xlabel("Label: {0}".format(class_names[instances[1][id]]), fontsize=30)
     plt.tight_layout()
     plt.savefig("plots/{0}".format(name), format='pdf', bbox_inches='tight', pad_inches=0)
+    plt.close()
+
+    df.sort_values(by="ksd", ascending=False, inplace=True)
+    ksd_sort_idx = df.iloc[0].name
+
+    df.sort_values(by="rbf_kernel", ascending=False, inplace=True)
+    rbf_sort_idx = df.iloc[0].name
+
+    df.sort_values(by="scalars", ascending=False, inplace=True)
+    scalars_sort_idx = df.iloc[0].name
+
+    titles = ["Original", "RBF", "IF", "KSD"]
+
+    points_to_plot = [dt_i, rbf_sort_idx, scalars_sort_idx, ksd_sort_idx]
+    instances = []
+    feature_group = []
+    label_group = []
+    pred_group = []
+
+    for j in points_to_plot:
+
+        train_point = train_loader.dataset[j]
+        feature_group.append(train_point[0])
+        label_group.append(train_point[1])
+        img = train_point[0].unsqueeze(0)
+        pred_group.append(model.predict(img).argmax(dim=1).item())
+
+    instances.append(feature_group)
+    instances.append(label_group)
+    instances.append(pred_group)
+
+    a = name.split(".")
+    a[0] = a[0] + "_comp"
+    name = ".".join(a)
+
+    n_images = len(instances[0])
+    fig = plt.figure(figsize=(3.7 * n_images, 4))
+
+    for id in np.arange(n_images):
+        ax = fig.add_subplot(1, n_images, id + 1, xticks=[], yticks=[])
+        plt.imshow(im_convert(instances[0][id]))
+        ax.set_xlabel("Label: {0} \n Pred: {1}".format(class_names[instances[1][id]], class_names[instances[2][id]]), fontsize=28)
+        ax.set_title(titles[id], fontsize=30)
+    plt.tight_layout()
+    plt.savefig("plots/{0}".format(name), format='pdf', bbox_inches='tight', pad_inches=0)
+    plt.close()
