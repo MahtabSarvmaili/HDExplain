@@ -76,6 +76,7 @@ if __name__ == "__main__":
     parser.add_argument('--synthetic', dest='synthetic', action='store_true')
     parser.add_argument('--gpu', dest='gpu', action='store_true')
     parser.add_argument('--scale', dest='scale', action='store_true')
+    parser.add_argument('--flip', dest='flip', action='store_true')
     parser.add_argument('-temperature', dest='temperature', type=check_float_positive, default=1.0)
     args = parser.parse_args()
     main(args)

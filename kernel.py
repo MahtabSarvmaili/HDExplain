@@ -61,21 +61,22 @@ def main(args):
     results['coverage'] = coverage
     results['hit_rate'] = hit_rate
     results['execution_time'] = et - st
-    df = df.append(results, ignore_index=True)
+    df = df._append(results, ignore_index=True)
     save_dataframe_csv(df, "tables", "Explainability_kernel_{0}.csv".format(args.data))
         
 
 if __name__ == "__main__":
     # Commandline arguments
     parser = argparse.ArgumentParser(description="Explain")
-    parser.add_argument('-network', dest='network', default="SimpleNet")
-    parser.add_argument('-data', dest='data', default="Moon")
-    parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=2)
+    parser.add_argument('-network', dest='network', default="ResNet")
+    parser.add_argument('-data', dest='data', default="SVHN")
+    parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=10)
     parser.add_argument('-seed', dest='seed', type=check_int_positive, default=42)
     parser.add_argument('-explainer', dest='explainer', default="YADEA")
     parser.add_argument('--synthetic', dest='synthetic', action='store_true')
     parser.add_argument('--gpu', dest='gpu', action='store_true')
     parser.add_argument('--scale', dest='scale', action='store_true')
+    parser.add_argument('--flip', dest='flip', action='store_true')
     parser.add_argument('-kernel', dest='kernel', default="RBF")
     args = parser.parse_args()
     main(args)

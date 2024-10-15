@@ -2,7 +2,7 @@
 import numpy as np
 import torch
 
-def perturbation_explanation(explainer, dataloader, size=100, seed=1, topk=3, gpu=False):
+def perturbation_explanation(explainer, dataloader, size=100, seed=1, topk=3, flip=False, gpu=False):
 
     influences = []
 
@@ -17,18 +17,18 @@ def perturbation_explanation(explainer, dataloader, size=100, seed=1, topk=3, gp
 
     X = np.stack(data_features)
     Xtensor = torch.from_numpy(X)
+    if flip:
+        Xtensor = torch.flip(Xtensor, (3,))
+        Xperturbed = Xtensor
+    else:
 
-    Xtensor = torch.flip(Xtensor, (3,))
+        G = torch.Generator()
+        G.manual_seed(seed)
 
-    G = torch.Generator()
-    G.manual_seed(seed)
+        var = torch.var(Xtensor) * 0.01
 
-    # var = torch.var(Xtensor) * 0.01
-
-    # perturbation = torch.FloatTensor(Xtensor.shape).uniform_(-var, var, generator=G)
-    # # perturbation = 0
-    # Xperturbed = torch.clip(Xtensor + perturbation, torch.min(Xtensor), torch.max(Xtensor))
-    Xperturbed = Xtensor
+        perturbation = torch.FloatTensor(Xtensor.shape).uniform_(-var, var, generator=G)
+        Xperturbed = torch.clip(Xtensor + perturbation, torch.min(Xtensor), torch.max(Xtensor))
 
     Xperturbed = Xperturbed.detach()
 

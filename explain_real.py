@@ -25,9 +25,14 @@ def main(args):
     explainer = explainers[args.explainer](model, args.n_classes, gpu=args.gpu, scale=args.scale)
 
     train_loader, test_loader, class_names = real_data[args.data](n_test=10, subsample=True)
+    test_iter = iter(test_loader)
 
-    X_test, y_test = next(iter(test_loader))
-     
+    # Get the first batch (we won't use this one)
+    _ = next(test_iter)
+
+    # Get the second batch
+    X_test, y_test = next(test_iter)
+
     explainer.data_influence(train_loader, cache=True)
 
     X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
@@ -46,7 +51,7 @@ def main(args):
     for i in range(len(instances)):
         plot_explanation_images(instances[i], class_names, 
                                 name=name_template.format(args.explainer, args.data, i))
-        
+
 
 if __name__ == "__main__":
     # Commandline arguments

@@ -1,6 +1,8 @@
 import pandas as pd
 import torch
 import numpy as np
+from numpy.ma.core import indices
+
 from utils import explainers, networks, synthetic_data, real_data, check_int_positive, explain_instance
 from viz import ksd_influence
 import argparse
@@ -8,7 +10,7 @@ import argparse
 from torch.utils.data import DataLoader
 from models import ClassifierTrainer, CustomDataset
 from viz import plot_explanation_images
-from utils.ksd_debugging import process_kernel_debugging
+from utils.ksd_debugging import index_to_debug
 
 
 def main(args):
@@ -25,8 +27,6 @@ def main(args):
                                                            args.data,
                                                            args.n_classes))['net'])
     explainer = explainers[args.explainer](model, args.n_classes, gpu=args.gpu, scale=args.scale)
-    infl_fun = explainers["IF"](model, args.n_classes, gpu=args.gpu, scale=args.scale)
-
     train_loader, test_loader, class_names = real_data[args.data](n_test=10, subsample=True)
 
     criterion = torch.nn.CrossEntropyLoss(reduction='none')
@@ -48,48 +48,25 @@ def main(args):
     data_points = list(zip(classes, loss_values))
     df = pd.DataFrame(data_points, columns=['Class', 'Loss'])
 
-    class_losses = df.groupby('Class')['Loss'].mean()
     min_loss_indices = df.groupby('Class')['Loss'].idxmin()
     max_loss_indices = df.groupby('Class')['Loss'].idxmax()
 
     explainer.data_influence(train_loader, cache=True)
 
     name_template = "{0}-{1}-KSD-SIM_rand.pdf"
-
-    for i in np.random.choice(len(train_loader.dataset), 20, replace=False):
-        X_test, y_test = train_loader.dataset.__getitem__(i)
-        X_test = X_test.unsqueeze(dim=0).cpu().numpy()
-        y_test = np.array(y_test).reshape(1)
-        influence_scores = explainer.ksd_debug(train_loader, X_test, y_test)
-        dt_ids = influence_scores.argsort()[::-1].reshape(-1)
-        ksd_eval_res = explainer.datapoint_model_discrepancy(train_loader, X_test, y_test, i, dt_ids)
-        process_kernel_debugging(train_loader, model, i, dt_ids, ksd_eval_res, 0.7, 0.7, class_names,
-                                 name_template.format(args.data, i))
+    indices = np.random.choice(len(train_loader.dataset), 40, replace=False)
+    index_to_debug(
+        model, train_loader, indices, explainer, class_names, name_template, 0.7, 0.7, args)
 
     name_template = "{0}-{1}-KSD-SIM_min.pdf"
-
-    for i in min_loss_indices:
-        X_test, y_test = train_loader.dataset.__getitem__(i)
-        X_test = X_test.unsqueeze(dim=0).cpu().numpy()
-        y_test = np.array(y_test).reshape(1)
-        influence_scores = explainer.ksd_debug(train_loader, X_test, y_test)
-        dt_ids = influence_scores.argsort()[::-1].reshape(-1)
-        ksd_eval_res = explainer.datapoint_model_discrepancy(train_loader, X_test, y_test, i, dt_ids)
-        process_kernel_debugging(train_loader, model, i, dt_ids, ksd_eval_res, 0.99, 0.7, class_names,
-                                 name_template.format(args.data, i))
+    index_to_debug(
+        model, train_loader, min_loss_indices, explainer,
+        class_names, name_template, 0.99, 0.7, args)
 
     name_template = "{0}-{1}-KSD-SIM_max.pdf"
-
-    for i in max_loss_indices:
-        X_test, y_test = train_loader.dataset.__getitem__(i)
-        X_test = X_test.unsqueeze(dim=0).cpu().numpy()
-        y_test = np.array(y_test).reshape(1)
-        influence_scores = explainer.ksd_debug(train_loader, X_test, y_test)
-        dt_ids = influence_scores.argsort()[::-1].reshape(-1)
-        ksd_eval_res = explainer.datapoint_model_discrepancy(train_loader, X_test, y_test, i, dt_ids)
-        process_kernel_debugging(train_loader, model, i, dt_ids, ksd_eval_res, 0.99, 0.7, class_names,
-                                 name_template.format(args.data, i))
-
+    index_to_debug(
+        model, train_loader, max_loss_indices, explainer,
+        class_names, name_template, 0.99, 0.7, args)
 
 
 if __name__ == "__main__":

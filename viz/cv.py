@@ -1,14 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-from matplotlib.cbook import get_sample_data
 from PIL import Image
+from dataloaders.cv import normalize_factors
 
 
-def im_convert(tensor):
+def im_convert(tensor, name=None):
+  assert name is not None, "Name of the dataset is required"
+  norm_fact = normalize_factors[name]
   image = tensor.cpu().clone().detach().numpy()
   image = image.transpose(1, 2, 0)
-  image = image * np.array((0.2023, 0.1994, 0.2010)) + np.array((0.485, 0.456, 0.406))
+  image = image * norm_fact['std'] + norm_fact['mean']
   image = image.clip(0, 1)
   return image
 
@@ -19,7 +21,7 @@ def plot_explanation_images(instance, classes, name=""):
 
   for idx in np.arange(n_images):
       ax = fig.add_subplot(1, n_images, idx+1, xticks=[], yticks=[])
-      plt.imshow(im_convert(instance[0][idx]))
+      plt.imshow(im_convert(instance[0][idx], name.split("-")[1]))
       if idx == 0:
         ax.set_xlabel("Predict: {0}".format(classes[instance[1][idx]]), fontsize=32)
       else:

@@ -45,11 +45,11 @@ def main(args):
 
     explainer.data_influence(dataloader, cache=True)
 
-    coverage, hit_rate = perturbation_explanation(explainer, dataloader, seed=args.seed)
+    coverage, hit_rate = perturbation_explanation(explainer, dataloader, seed=args.seed, flip=args.flip)
     et = time.time()
 
     try:
-        df = load_dataframe_csv("tables", "Explainability_{0}.csv".format(args.data))
+        df = load_dataframe_csv("random_noise_tables", "Explainability_{0}.csv".format(args.data))
     except:
         columns = ['data', 'explainer', 'scale', 'coverage', 'hit_rate', 'execution_time']
         df = pd.DataFrame(columns=columns)
@@ -61,8 +61,8 @@ def main(args):
     results['coverage'] = coverage
     results['hit_rate'] = hit_rate
     results['execution_time'] = et - st
-    df = df.append(results, ignore_index=True)
-    save_dataframe_csv(df, "tables", "Explainability_{0}.csv".format(args.data))
+    df = df._append(results, ignore_index=True)
+    save_dataframe_csv(df, "random_noise_tables", "Explainability_{0}.csv".format(args.data))
         
 
 if __name__ == "__main__":
@@ -75,6 +75,7 @@ if __name__ == "__main__":
     parser.add_argument('-explainer', dest='explainer', default="YADEA")
     parser.add_argument('--synthetic', dest='synthetic', action='store_true')
     parser.add_argument('--gpu', dest='gpu', action='store_true')
+    parser.add_argument('--flip', dest='flip', action='store_true')
     parser.add_argument('--scale', dest='scale', action='store_true')
     args = parser.parse_args()
     main(args)
