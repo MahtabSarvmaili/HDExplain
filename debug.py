@@ -94,9 +94,9 @@ def main(args):
 if __name__ == "__main__":
     # Commandline arguments
     parser = argparse.ArgumentParser(description="Debug")
-    parser.add_argument('-network', dest='network', default="SimpleNet")
-    parser.add_argument('-data', dest='data', default="Moon")
-    parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=2)
+    parser.add_argument('-network', dest='network', default="ResNet")
+    parser.add_argument('-data', dest='data', default="CIFAR10")
+    parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=10)
     parser.add_argument('-seed', dest='seed', type=check_int_positive, default=42)
     parser.add_argument('-explainer', dest='explainer', default="YADEA")
     parser.add_argument('--synthetic', dest='synthetic', action='store_true')

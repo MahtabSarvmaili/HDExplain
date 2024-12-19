@@ -1,0 +1,2 @@
+data,explainer,scale,coverage,hit_rate,execution_time
+CIFAR10,TRAK,True,0.4766666666666667,0.06,1209.3756201267242

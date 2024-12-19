@@ -20,6 +20,8 @@ class KSDExplainer(BaseExplainer):
         else:
             self.kernel = self.liner_stein_kernel
         self.temperature = temperature
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
 
     def data_influence(self, train_loader, cache=True, **kwargs):
 
@@ -27,8 +29,8 @@ class KSDExplainer(BaseExplainer):
         for i, data in enumerate(tqdm(train_loader)):
             Xtensor, ytensor = data
             if self.gpu:
-                Xtensor = Xtensor.cuda()
-                ytensor = ytensor.cuda()
+                Xtensor = Xtensor.to(self.device)
+                ytensor = ytensor.to(self.device)
             yonehot = F.one_hot(ytensor, num_classes=self.n_classes)
             # print(yonehot)
             xbackpropable = Xtensor.clone().detach()
@@ -205,7 +207,7 @@ class KSDExplainer(BaseExplainer):
     def inference_transfer(self, X):
         Xtensor = torch.from_numpy(np.array(X, dtype=np.float32))
         if self.gpu:
-            Xtensor = Xtensor.cuda()
+            Xtensor = Xtensor.to(self.device)
         y_hat = torch.argmax(self.classifier.predict(Xtensor), dim=1)
         return self._data_influence(Xtensor, y_hat)
     
@@ -217,7 +219,7 @@ class KSDExplainer(BaseExplainer):
         else:
             Xtensor_test = torch.from_numpy(np.array(X_test, dtype=np.float32))
             if self.gpu:
-                Xtensor_test = Xtensor_test.cuda()
+                Xtensor_test = Xtensor_test.to(self.device)
             representation = self.classifier.representation(Xtensor_test)
             D_test = np.hstack([self.to_np(representation),yonehot_test])
 
@@ -229,7 +231,7 @@ class KSDExplainer(BaseExplainer):
                 D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
             else:
                 if self.gpu:
-                    X = X.cuda()
+                    X = X.to(self.device)
                 representation = self.classifier.representation(X)
                 D = np.hstack([self.to_np(representation),yonehot])
 
@@ -247,7 +249,7 @@ class KSDExplainer(BaseExplainer):
         Xtensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
         ytensor = torch.tensor(y_test)
         if self.gpu:
-            Xtensor = Xtensor.cuda()
+            Xtensor = Xtensor.to(self.device)
         yonehot_test = F.one_hot(ytensor, num_classes=self.n_classes)
         DXY_test, _ = self._data_influence(Xtensor, ytensor)
         if not self.last_layer:
@@ -255,7 +257,7 @@ class KSDExplainer(BaseExplainer):
         else:
             Xtensor_test = torch.from_numpy(np.array(X_test, dtype=np.float32))
             if self.gpu:
-                Xtensor_test = Xtensor_test.cuda()
+                Xtensor_test = Xtensor_test.to(self.device)
             representation = self.classifier.representation(Xtensor_test)
             D_test = np.hstack([self.to_np(representation),yonehot_test])
 
@@ -267,7 +269,7 @@ class KSDExplainer(BaseExplainer):
                 D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
             else:
                 if self.gpu:
-                    X = X.cuda()
+                    X = X.to(self.device)
                 representation = self.classifier.representation(X)
                 D = np.hstack([self.to_np(representation),yonehot])
 
@@ -290,7 +292,7 @@ class KSDExplainer(BaseExplainer):
         Xtensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
         ytensor = torch.tensor(y_test)
         if self.gpu:
-            Xtensor = Xtensor.cuda()
+            Xtensor = Xtensor.to(self.device)
         yonehot_test = F.one_hot(ytensor, num_classes=self.n_classes)
 
         D = np.hstack([X_test.reshape(X_test.shape[0], -1), yonehot_test])
@@ -329,7 +331,7 @@ class KSDExplainer(BaseExplainer):
         else:
             Xtensor_test = torch.from_numpy(np.array(X_test, dtype=np.float32))
             if self.gpu:
-                Xtensor_test = Xtensor_test.cuda()
+                Xtensor_test = Xtensor_test.to(self.device)
             representation = self.classifier.representation(Xtensor_test)
             D_test = np.hstack([self.to_np(representation),yonehot_test])
 
@@ -342,7 +344,7 @@ class KSDExplainer(BaseExplainer):
                 D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
             else:
                 if self.gpu:
-                    X = X.cuda()
+                    X = X.to(self.device)
                 representation = self.classifier.representation(X)
                 D = np.hstack([self.to_np(representation),yonehot])
 
@@ -389,7 +391,7 @@ class KSDExplainer(BaseExplainer):
                 D = np.hstack([self.to_np(X.reshape(X.shape[0], -1)),yonehot])
             else:
                 if self.gpu:
-                    X = X.cuda()
+                    X = X.to(self.device)
                 representation = self.classifier.representation(X)
                 D = np.hstack([self.to_np(representation),yonehot])   
 

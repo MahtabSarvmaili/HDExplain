@@ -1,3 +1,19 @@
+  - Install the required packages from the environment.yml file
+    - Change the prefix to your desired location
+    - ensure that cuda version is compatible with the pytorch version
+  - Optional: Train your model using the train.py file
+  - Test the explanation methods for real-world datasets (CIFAR10 - SVHN) using explain_real.py
+  - Test the explanation methods for synthetic datasets (Gaussian, Uniform, and Moons) using explain.py
+  - Test the explanation methods for the HitRate and Coverate using explainability.py
+  - Test the influence of temprature on the explanation methods using temperature.py
+  - Test the impact of kernel methods on the explanation methods using kernel.py 
+
+The bash file for every corresponding python file is provided. 
+To replicate the results, run all of the bash files in the terminal and the plots, tables folders.
+Finally run the jupyter notebooks (table_summary.ipynb, table_summary_noise.ipynb) to plot the results.
+
+
+
 conda activate ood
   527  train.py
   528  python train.py

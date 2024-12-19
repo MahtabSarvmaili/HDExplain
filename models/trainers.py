@@ -19,14 +19,20 @@ class ClassifierTrainer(object):
     def __init__(self, model):
         self.criterion = nn.CrossEntropyLoss()
         self.optimizer = optim.Adam(model.parameters(), lr=0.01)
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        else:
+            self.device = torch.device("cpu")
 
     def train(self, model, dataloader, name="", save=True, epochs=100):
+        model = model.to(self.device)
         for epoch in range(epochs):  # loop over the dataset multiple times
             running_loss = 0.0
             for i, data in enumerate(dataloader):
                 # get the inputs; data is a list of [inputs, labels]
                 inputs, labels = data
-
+                inputs = inputs.to(self.device)
+                labels = labels.to(self.device)
                 # zero the parameter gradients
                 self.optimizer.zero_grad()
 

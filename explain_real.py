@@ -26,11 +26,6 @@ def main(args):
 
     train_loader, test_loader, class_names = real_data[args.data](n_test=10, subsample=True)
     test_iter = iter(test_loader)
-
-    # Get the first batch (we won't use this one)
-    _ = next(test_iter)
-
-    # Get the second batch
     X_test, y_test = next(test_iter)
 
     explainer.data_influence(train_loader, cache=True)
@@ -57,10 +52,10 @@ if __name__ == "__main__":
     # Commandline arguments
     parser = argparse.ArgumentParser(description="Explain")
     parser.add_argument('-network', dest='network', default="ResNet")
-    parser.add_argument('-data', dest='data', default="CIFAR10")
+    parser.add_argument('-data', dest='data', default="SVHN")
     parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=10)
     parser.add_argument('-explainer', dest='explainer', default="YADEA")
     parser.add_argument('--gpu', dest='gpu', action='store_true')
-    parser.add_argument('--scale', dest='scale', action='store_true')
+    parser.add_argument('--scale', dest='scale', action='store_true', default=True)
     args = parser.parse_args()
     main(args)
