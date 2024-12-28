@@ -11,23 +11,23 @@ from viz import plot_explanation_images
 
 def main(args):
     model = networks[args.network](num_classes=args.n_classes)
-    
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     try:
         model.load_state_dict(
             torch.load("checkpoints/{0}-{1}-{2}.pt".format(args.network, 
                                                         args.data, 
-                                                        args.n_classes)))
+                                                        args.n_classes), map_location=device))
     except:
         model.load_state_dict(
             torch.load("checkpoints/{0}-{1}-{2}.pt".format(args.network, 
                                                         args.data, 
-                                                        args.n_classes))['net'])
+                                                        args.n_classes), map_location=device)['net'])
     explainer = explainers[args.explainer](model, args.n_classes, gpu=args.gpu, scale=args.scale)
 
     train_loader, test_loader, class_names = real_data[args.data](n_test=10, subsample=True)
     test_iter = iter(test_loader)
     X_test, y_test = next(test_iter)
-
+    model.forward(X_test)
     explainer.data_influence(train_loader, cache=True)
 
     X_test_tensor = torch.from_numpy(np.array(X_test, dtype=np.float32))
@@ -51,8 +51,8 @@ def main(args):
 if __name__ == "__main__":
     # Commandline arguments
     parser = argparse.ArgumentParser(description="Explain")
-    parser.add_argument('-network', dest='network', default="ResNet")
-    parser.add_argument('-data', dest='data', default="SVHN")
+    parser.add_argument('-network', dest='network', default="ViT")
+    parser.add_argument('-data', dest='data', default="CIFAR10_224")
     parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=10)
     parser.add_argument('-explainer', dest='explainer', default="YADEA")
     parser.add_argument('--gpu', dest='gpu', action='store_true')

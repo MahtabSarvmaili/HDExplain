@@ -1,6 +1,7 @@
 from explainers import *
 from models.classifiers import SimpleNet, resnet18
-from dataloaders import rectangular, moon, cifar10, ocea, mri, svhn
+from models.vit import vit_model
+from dataloaders import rectangular, moon, cifar10, ocea, mri, svhn, cifar10_224, svhn_224
 
 
 explainers = {
@@ -12,7 +13,8 @@ explainers = {
 
 networks = {
     "SimpleNet": SimpleNet,
-    "ResNet": resnet18
+    "ResNet": resnet18,
+    "ViT": vit_model
 }
 
 synthetic_data = {
@@ -24,5 +26,7 @@ real_data = {
     "CIFAR10": cifar10,
     "OCEA": ocea,
     "MRI": mri,
-    "SVHN": svhn
+    "SVHN": svhn,
+    "CIFAR10_224": cifar10_224,
+    "SVHN_224": svhn_224
 }
