@@ -1,5 +1,3 @@
-[]: # (start)
-
 # Classifier Explanation via Kernelized Stein Discrepancy (KSD)
 
 This repository provides the implementation for the paper:
@@ -138,4 +136,3 @@ This project is licensed under the Apache License 2.0.
 
 [![License: Apache](https://img.shields.io/badge/License-Apache-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-[]: # (end)
