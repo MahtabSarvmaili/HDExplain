@@ -4,7 +4,7 @@ This repository provides the implementation for the paper:
 
 **"Data-centric Prediction Explanation via Kernelized Stein Discrepancy"**  
 by Mahtab Sarvmaili, Hassan Sajjad, and Ga Wu  
-Published on [arXiv](https://arxiv.org/abs/2403.15576).  
+Published in ICLR 2025 [ICLR](https://iclr.cc/virtual/2025/poster/30035).  
 
 If you use this work in your research, please cite:
 
