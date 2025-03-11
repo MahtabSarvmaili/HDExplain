@@ -1,3 +1,6 @@
+# Classifier_Explaination_via_KSD
+===
+
   - Install the required packages from the environment.yml file
     - Change the prefix to your desired location
     - ensure that cuda version is compatible with the pytorch version
@@ -43,3 +46,13 @@ conda activate ood
   552  python cifar10.py -data OCEA -n_classes 5 --gpu -explainer TracIn
   553  python cifar10.py -data OCEA -n_classes 5 --gpu -explainer TracIn --scale
   554  python cifar10.py -data OCEA -n_classes 5 --gpu -explainer IF --scale
+
+Some graph visualization tool
+https://stackoverflow.com/questions/13513455/drawing-a-graph-or-a-network-from-a-distance-matrix
+https://stackoverflow.com/questions/53967392/creating-a-graph-with-images-as-nodes
+https://stackoverflow.com/questions/75110767/position-of-images-as-nodes-in-networkx-plot
+https://networkx.org/documentation/stable/reference/generated/networkx.classes.function.set_node_attributes.html
+https://www.kaggle.com/datasets/henriqueyamahata/bank-marketing
+https://www.kaggle.com/datasets/andrewmvd/heart-failure-clinical-data/code
+https://www.kaggle.com/datasets/shreyag1103/brain-mri-scans-for-brain-tumor-classification/data
+https://www.kaggle.com/datasets/rikdifos/credit-card-approval-prediction/data

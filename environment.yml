@@ -195,4 +195,4 @@ dependencies:
       - tzdata==2024.1
       - urllib3==1.26.13
       - wcwidth==0.2.13
-prefix: /home/mahtab/miniconda3/envs/hdexplain
+prefix: /home/username/miniconda3/envs/hdexplain
