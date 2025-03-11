@@ -5,7 +5,7 @@ from dataloaders import rectangular, moon, cifar10, ocea, mri, svhn, cifar10_224
 
 
 explainers = {
-    "YADEA": KSDExplainer,
+    "HDEXPLAIN": KSDExplainer,
     "IF": InfluenceFunction,
     "TracIn": TracIn,
     "RPS": RepresenterPointSelection

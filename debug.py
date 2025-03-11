@@ -98,7 +98,7 @@ if __name__ == "__main__":
     parser.add_argument('-data', dest='data', default="CIFAR10")
     parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=10)
     parser.add_argument('-seed', dest='seed', type=check_int_positive, default=42)
-    parser.add_argument('-explainer', dest='explainer', default="YADEA")
+    parser.add_argument('-explainer', dest='explainer', default="HDEXPLAIN")
     parser.add_argument('--synthetic', dest='synthetic', action='store_true')
     parser.add_argument('--visualize', dest='visualize', action='store_true')
     parser.add_argument('--gpu', dest='gpu', action='store_true')

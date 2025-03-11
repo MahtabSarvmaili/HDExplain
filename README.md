@@ -9,11 +9,12 @@ Published in ICLR 2025 [ICLR](https://iclr.cc/virtual/2025/poster/30035).
 If you use this work in your research, please cite:
 
 ```bibtex
-@article{sarvmaili2024data,
-  title={Data-centric Prediction Explanation via Kernelized Stein Discrepancy},
-  author={Sarvmaili, Mahtab and Sajjad, Hassan and Wu, Ga},
-  journal={arXiv preprint arXiv:2403.15576},
-  year={2024}
+@inproceedings{sarvmaili2024data,
+  author = {Mahtab Sarvmaili and Hassan Sajjad and Ga Wu},
+  year = {2025},
+  title = {Data-centric Prediction Explanation via Kernelized Stein Discrepancy},
+  booktitle = {Proceedings of the 13th International Conference on Learning Representations (ICLR-2025)},
+  address = {Singapore},
 }
 ```
 

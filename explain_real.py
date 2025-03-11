@@ -54,7 +54,7 @@ if __name__ == "__main__":
     parser.add_argument('-network', dest='network', default="ViT")
     parser.add_argument('-data', dest='data', default="CIFAR10_224")
     parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=10)
-    parser.add_argument('-explainer', dest='explainer', default="YADEA")
+    parser.add_argument('-explainer', dest='explainer', default="HDEXPLAIN")
     parser.add_argument('--gpu', dest='gpu', action='store_true')
     parser.add_argument('--scale', dest='scale', action='store_true', default=True)
     args = parser.parse_args()

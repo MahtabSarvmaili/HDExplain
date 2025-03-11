@@ -53,7 +53,7 @@ if __name__ == "__main__":
     parser.add_argument('-network', dest='network', default="SimpleNet")
     parser.add_argument('-data', dest='data', default="Moon")
     parser.add_argument('-n_classes', dest='n_classes', type=check_int_positive, default=2)
-    parser.add_argument('-explainer', dest='explainer', default="YADEA")
+    parser.add_argument('-explainer', dest='explainer', default="HDEXPLAIN")
     parser.add_argument('--synthetic', dest='synthetic', action='store_true')
     parser.add_argument('--visualize', dest='visualize', action='store_true')
     args = parser.parse_args()
